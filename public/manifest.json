@@ -1,0 +1,17 @@
+{
+  "name": "BetKing - Number Betting",
+  "short_name": "BetKing",
+  "description": "Place your bets on numbers 0-99",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1318",
+  "theme_color": "#d4a520",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
