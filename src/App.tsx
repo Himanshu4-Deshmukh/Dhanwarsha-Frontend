@@ -10,6 +10,12 @@ import WalletPage from "./pages/WalletPage";
 import BetsPage from "./pages/BetsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminSlots from "./pages/admin/AdminSlots";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminBets from "./pages/admin/AdminBets";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -22,6 +28,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
   if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return (
+    <div className="flex h-screen items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+  if (!user) return <Navigate to="/auth" replace />;
+  if (user.role !== 'ADMIN') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -50,6 +68,20 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="slots" element={<AdminSlots />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="payments" element={<AdminPayments />} />
+              <Route path="bets" element={<AdminBets />} />
+            </Route>
             <Route path="/*" element={<AppLayout />} />
           </Routes>
         </BrowserRouter>

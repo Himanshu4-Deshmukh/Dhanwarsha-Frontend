@@ -21,9 +21,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const api = {
   // Auth
   login: (email: string, password: string) =>
-    request<{ access_token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    request<{ access_token: string; user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   signup: (data: { name: string; email: string; password: string }) =>
-    request<{ access_token: string }>('/auth/signup', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ access_token: string; user: any }>('/auth/signup', { method: 'POST', body: JSON.stringify(data) }),
 
   // User
   getProfile: () => request<any>('/users/profile'),
@@ -37,6 +37,11 @@ export const api = {
   getActiveSlot: () => request<any>('/slots/active'),
   getSlots: () => request<any[]>('/slots'),
   getSlot: (id: string) => request<any>(`/slots/${id}`),
+  createSlot: (data: { startTime: string; endTime: string; betAmount: number; winAmount: number }) =>
+    request<any>('/slots', { method: 'POST', body: JSON.stringify(data) }),
+  setWinningNumber: (slotId: string, winningNumber: number) =>
+    request<any>(`/slots/${slotId}/winning-number`, { method: 'POST', body: JSON.stringify({ winningNumber }) }),
+  getSlotExposure: (slotId: string) => request<any>(`/slots/${slotId}/exposure`),
   
   // Bets
   placeBet: (slotId: string, number: number) =>
@@ -47,4 +52,19 @@ export const api = {
   requestPayment: (amount: number, screenshotUrl: string) =>
     request<any>('/payments/request', { method: 'POST', body: JSON.stringify({ amount, screenshotUrl }) }),
   getMyPayments: () => request<any[]>('/payments/my-requests'),
+
+  // Admin
+  admin: {
+    getAllUsers: () => request<any[]>('/admin/users'),
+    getAllBets: () => request<any[]>('/admin/bets'),
+    getAllTransactions: () => request<any[]>('/admin/transactions'),
+    getAllPaymentRequests: () => request<any[]>('/admin/payment-requests'),
+    approvePayment: (id: string, adminRemark?: string) =>
+      request<any>(`/admin/payment-requests/${id}/approve`, { method: 'POST', body: JSON.stringify({ adminRemark: adminRemark || 'Approved' }) }),
+    rejectPayment: (id: string, adminRemark?: string) =>
+      request<any>(`/admin/payment-requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ adminRemark: adminRemark || 'Rejected' }) }),
+    creditWallet: (userId: string, amount: number) =>
+      request<any>('/admin/credit-wallet', { method: 'POST', body: JSON.stringify({ userId, amount }) }),
+    getSlotProfit: (slotId: string) => request<any>(`/admin/slots/${slotId}/profit`),
+  },
 };

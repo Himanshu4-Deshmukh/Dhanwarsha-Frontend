@@ -12,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<'USER' | 'ADMIN'>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -42,10 +42,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     else setIsLoading(false);
   }, [token, fetchProfile]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<'USER' | 'ADMIN'> => {
     const res = await api.login(email, password);
     localStorage.setItem('token', res.access_token);
     setToken(res.access_token);
+    // Fetch profile to get full user data including role
+    const profile = await api.getProfile();
+    setUser(profile);
+    return profile.role as 'USER' | 'ADMIN';
   };
 
   const signup = async (name: string, email: string, password: string) => {
