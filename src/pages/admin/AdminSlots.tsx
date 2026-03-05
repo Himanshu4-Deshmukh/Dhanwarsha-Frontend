@@ -167,14 +167,14 @@ export default function AdminSlots() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
             onClick={(e) => e.target === e.currentTarget && setShowCreate(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
+              className="w-full max-w-md mx-4 rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
             >
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white font-display">Create New Slot</h2>
