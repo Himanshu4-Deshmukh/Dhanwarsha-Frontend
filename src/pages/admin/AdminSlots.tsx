@@ -23,10 +23,21 @@ export default function AdminSlots() {
   const [winningInputs, setWinningInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
 
+  // Local datetime string for inputs
+  const toLocalDatetimeString = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().slice(0, 16);
+  };
+
+  const now = new Date();
+  const quickStart = toLocalDatetimeString(now);
+  const quickEnd = toLocalDatetimeString(new Date(now.getTime() + 15 * 60 * 1000));
+
   // Create form
   const [form, setForm] = useState({
-    startTime: '',
-    endTime: '',
+    startTime: quickStart,
+    endTime: quickEnd,
     betAmount: 10,
     winAmount: 95,
   });
@@ -50,10 +61,24 @@ export default function AdminSlots() {
 
   const createSlot = async (e: React.FormEvent) => {
     e.preventDefault();
+    const startDate = new Date(form.startTime);
+    const endDate = new Date(form.endTime);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      toast.error('Invalid start or end time. Use the format YYYY-MM-DDTHH:MM.');
+      return;
+    }
+
+    if (startDate >= endDate) {
+      toast.error('End time must be after start time.');
+      return;
+    }
+
+    // Proceed if valid
     try {
       await api.createSlot({
-        startTime: new Date(form.startTime).toISOString(),
-        endTime: new Date(form.endTime).toISOString(),
+        startTime: startDate.toISOString(),
+        endTime: endDate.toISOString(),
         betAmount: form.betAmount,
         winAmount: form.winAmount,
       });
@@ -100,17 +125,6 @@ export default function AdminSlots() {
       setSubmitting(prev => ({ ...prev, [slotId]: false }));
     }
   };
-
-  // Local datetime string for inputs
-  const toLocalDatetimeString = (date: Date) => {
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - offset * 60 * 1000);
-    return localDate.toISOString().slice(0, 16);
-  };
-
-  const now = new Date();
-  const quickStart = toLocalDatetimeString(now);
-  const quickEnd = toLocalDatetimeString(new Date(now.getTime() + 15 * 60 * 1000));
 
   return (
     <div className="space-y-6">
