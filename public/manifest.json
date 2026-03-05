@@ -1,6 +1,6 @@
 {
-  "name": "BetKing - Number Betting",
-  "short_name": "BetKing",
+  "name": "DhanWarsha - Number Betting",
+  "short_name": "DhanWarsha",
   "description": "Place your bets on numbers 0-99",
   "start_url": "/",
   "display": "standalone",

@@ -1,18 +1,27 @@
-import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/lib/auth';
+import { useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 import {
-  LayoutDashboard, Users, Layers, CreditCard, TrendingUp,
-  LogOut, Menu, X, Coins, ChevronRight, Dice1
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+  LayoutDashboard,
+  Users,
+  Layers,
+  CreditCard,
+  TrendingUp,
+  LogOut,
+  Menu,
+  X,
+  Coins,
+  ChevronRight,
+  Dice1,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/slots', label: 'Slots', icon: Layers },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { to: '/admin/bets', label: 'All Bets', icon: TrendingUp },
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/slots", label: "Slots", icon: Layers },
+  { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/payments", label: "Payments", icon: CreditCard },
+  { to: "/admin/bets", label: "All Bets", icon: TrendingUp },
 ];
 
 export default function AdminLayout() {
@@ -22,7 +31,7 @@ export default function AdminLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/auth');
+    navigate("/auth");
   };
 
   return (
@@ -45,7 +54,9 @@ export default function AdminLayout() {
         {(sidebarOpen || true) && (
           <aside
             className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-white/5 bg-[hsl(220,20%,8%)] transition-transform duration-300 lg:translate-x-0 ${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+              sidebarOpen
+                ? "translate-x-0"
+                : "-translate-x-full lg:translate-x-0"
             }`}
           >
             {/* Brand */}
@@ -54,10 +65,15 @@ export default function AdminLayout() {
                 <Dice1 className="h-5 w-5 text-[hsl(220,20%,7%)]" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gradient-gold font-display">BetKing</p>
+                <p className="text-sm font-bold text-gradient-gold font-display">
+                  DhanWarsha
+                </p>
                 <p className="text-xs text-white/40">Admin Panel</p>
               </div>
-              <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="ml-auto lg:hidden"
+              >
                 <X className="h-4 w-4 text-white/40" />
               </button>
             </div>
@@ -73,14 +89,16 @@ export default function AdminLayout() {
                   className={({ isActive }) =>
                     `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-primary/15 text-primary'
-                        : 'text-white/50 hover:bg-white/5 hover:text-white/80'
+                        ? "bg-primary/15 text-primary"
+                        : "text-white/50 hover:bg-white/5 hover:text-white/80"
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <item.icon className={`h-4 w-4 ${isActive ? 'text-primary' : ''}`} />
+                      <item.icon
+                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                      />
                       {item.label}
                       {isActive && (
                         <ChevronRight className="ml-auto h-3 w-3 text-primary" />
@@ -98,8 +116,12 @@ export default function AdminLayout() {
                   {user?.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-white/80">{user?.name}</p>
-                  <p className="truncate text-xs text-white/40">{user?.email}</p>
+                  <p className="truncate text-xs font-semibold text-white/80">
+                    {user?.name}
+                  </p>
+                  <p className="truncate text-xs text-white/40">
+                    {user?.email}
+                  </p>
                 </div>
               </div>
               <button

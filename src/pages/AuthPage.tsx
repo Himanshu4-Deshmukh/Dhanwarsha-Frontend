@@ -1,39 +1,39 @@
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Loader2, Dice1 } from 'lucide-react';
+import { useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Loader2, Dice1 } from "lucide-react";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, signup, user } = useAuth();
   const navigate = useNavigate();
 
   // If already logged in, redirect appropriately
   if (user) {
-    navigate(user.role === 'ADMIN' ? '/admin' : '/');
+    navigate(user.role === "ADMIN" ? "/admin" : "/");
     return null;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
     try {
       if (isLogin) {
         const role = await login(email, password);
-        navigate(role === 'ADMIN' ? '/admin' : '/');
+        navigate(role === "ADMIN" ? "/admin" : "/");
       } else {
         await signup(name, email, password);
-        navigate('/');
+        navigate("/");
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -56,13 +56,17 @@ const AuthPage = () => {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+            transition={{ type: "spring", stiffness: 300 }}
             className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold gold-glow"
           >
             <Dice1 className="h-8 w-8 text-[hsl(220,20%,7%)]" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gradient-gold font-display">BetKing</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Pick your number. Win big.</p>
+          <h1 className="text-3xl font-bold text-gradient-gold font-display">
+            DhanWarsha
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Pick your number. Win big.
+          </p>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 card-glow">
@@ -70,7 +74,9 @@ const AuthPage = () => {
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-                isLogin ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                isLogin
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Login
@@ -78,7 +84,9 @@ const AuthPage = () => {
             <button
               onClick={() => setIsLogin(false)}
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-                !isLogin ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                !isLogin
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sign Up
@@ -89,9 +97,11 @@ const AuthPage = () => {
             {!isLogin && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
               >
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  Name
+                </label>
                 <input
                   type="text"
                   value={name}
@@ -103,7 +113,9 @@ const AuthPage = () => {
               </motion.div>
             )}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Email</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
@@ -114,7 +126,9 @@ const AuthPage = () => {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Password</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -140,13 +154,20 @@ const AuthPage = () => {
               disabled={loading}
               className="w-full rounded-xl bg-gradient-gold py-3 text-sm font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 gold-glow"
             >
-              {loading ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : isLogin ? 'Login' : 'Create Account'}
+              {loading ? (
+                <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+              ) : isLogin ? (
+                "Login"
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
 
           {isLogin && (
             <p className="mt-4 text-center text-xs text-muted-foreground">
-              Admin? Use <span className="font-mono text-primary">admin@example.com</span>
+              Admin? Use{" "}
+              <span className="font-mono text-primary">admin@example.com</span>
             </p>
           )}
         </div>
