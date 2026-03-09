@@ -4,6 +4,15 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Loader2, CheckCircle, XCircle, Eye, X, ExternalLink } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
+const API_ORIGIN = API_BASE.replace(/\/api\/?$/, '');
+
+const resolveScreenshotUrl = (url?: string) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${API_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,8 +153,13 @@ export default function AdminPayments() {
               {viewPayment.screenshotUrl && (
                 <div className="mb-4">
                   <p className="mb-2 text-xs font-medium text-white/50">Payment Screenshot</p>
+                  <img
+                    src={resolveScreenshotUrl(viewPayment.screenshotUrl)}
+                    alt="Payment proof"
+                    className="mb-2 h-44 w-full rounded-lg border border-white/10 object-cover"
+                  />
                   <a
-                    href={viewPayment.screenshotUrl}
+                    href={resolveScreenshotUrl(viewPayment.screenshotUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-primary hover:bg-white/10 transition-colors"

@@ -2,10 +2,13 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('token');
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
   };
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
@@ -49,6 +52,11 @@ export const api = {
   getMyBets: () => request<any[]>('/bets/my-bets'),
   
   // Payments
+  uploadPaymentScreenshot: (file: File) => {
+    const formData = new FormData();
+    formData.append('screenshot', file);
+    return request<{ screenshotUrl: string }>('/payments/upload-screenshot', { method: 'POST', body: formData });
+  },
   requestPayment: (amount: number, screenshotUrl: string) =>
     request<any>('/payments/request', { method: 'POST', body: JSON.stringify({ amount, screenshotUrl }) }),
   getMyPayments: () => request<any[]>('/payments/my-requests'),
