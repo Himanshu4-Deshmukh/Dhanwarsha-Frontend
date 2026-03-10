@@ -21,7 +21,9 @@ export default function AdminSlots() {
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [exposure, setExposure] = useState<Record<string, any>>({});
   const [winningInputs, setWinningInputs] = useState<Record<string, string>>({});
+  const [amountInputs, setAmountInputs] = useState<Record<string, { betAmount: string; winAmount: string }>>({});
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
+  const [updatingAmounts, setUpdatingAmounts] = useState<Record<string, boolean>>({});
 
   // Local datetime string for inputs
   const toLocalDatetimeString = (date: Date) => {
@@ -46,6 +48,17 @@ export default function AdminSlots() {
     try {
       const data = await api.getSlots();
       setSlots(data);
+      const nextAmounts = data.reduce(
+        (acc: Record<string, { betAmount: string; winAmount: string }>, slot: any) => {
+          acc[slot._id] = {
+            betAmount: String(slot.betAmount ?? 10),
+            winAmount: String(slot.winAmount ?? 95),
+          };
+          return acc;
+        },
+        {},
+      );
+      setAmountInputs(nextAmounts);
     } catch {
       toast.error('Failed to fetch slots');
     } finally {
@@ -123,6 +136,33 @@ export default function AdminSlots() {
       toast.error(err.message || 'Failed to set winning number');
     } finally {
       setSubmitting(prev => ({ ...prev, [slotId]: false }));
+    }
+  };
+
+  const updateSlotAmounts = async (slotId: string) => {
+    const inputs = amountInputs[slotId];
+    const betAmount = parseInt(inputs?.betAmount || '', 10);
+    const winAmount = parseInt(inputs?.winAmount || '', 10);
+
+    if (isNaN(betAmount) || betAmount < 1) {
+      toast.error('Bet amount must be at least 1');
+      return;
+    }
+
+    if (isNaN(winAmount) || winAmount < 1) {
+      toast.error('Win amount must be at least 1');
+      return;
+    }
+
+    setUpdatingAmounts((prev) => ({ ...prev, [slotId]: true }));
+    try {
+      await api.updateSlotAmounts(slotId, betAmount, winAmount);
+      toast.success(`Updated amounts to ${betAmount}-${winAmount}`);
+      await fetchSlots();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update slot amounts');
+    } finally {
+      setUpdatingAmounts((prev) => ({ ...prev, [slotId]: false }));
     }
   };
 
@@ -332,6 +372,58 @@ export default function AdminSlots() {
                           className="border-t border-white/5"
                         >
                           <div className="p-4 space-y-4">
+                            {/* Update Bet/Win Amounts */}
+                            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                              <h3 className="mb-3 text-sm font-semibold text-white/80 flex items-center gap-2">
+                                <Coins className="h-4 w-4" />
+                                Update Bet and Win Amounts
+                              </h3>
+                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={amountInputs[slot._id]?.betAmount ?? ''}
+                                  onChange={(e) =>
+                                    setAmountInputs((prev) => ({
+                                      ...prev,
+                                      [slot._id]: {
+                                        betAmount: e.target.value,
+                                        winAmount: prev[slot._id]?.winAmount ?? String(slot.winAmount ?? 95),
+                                      },
+                                    }))
+                                  }
+                                  placeholder="Bet amount"
+                                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={amountInputs[slot._id]?.winAmount ?? ''}
+                                  onChange={(e) =>
+                                    setAmountInputs((prev) => ({
+                                      ...prev,
+                                      [slot._id]: {
+                                        betAmount: prev[slot._id]?.betAmount ?? String(slot.betAmount ?? 10),
+                                        winAmount: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  placeholder="Win amount"
+                                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                                <button
+                                  onClick={() => updateSlotAmounts(slot._id)}
+                                  disabled={updatingAmounts[slot._id]}
+                                  className="rounded-lg bg-gradient-gold px-4 py-2 text-sm font-semibold text-[hsl(220,20%,7%)] gold-glow disabled:opacity-50"
+                                >
+                                  {updatingAmounts[slot._id] ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Update'}
+                                </button>
+                              </div>
+                              <p className="mt-2 text-xs text-white/40">
+                                Amounts can be updated before slot start time.
+                              </p>
+                            </div>
+
                             {/* Set Winning Number */}
                             {slot.status === 'OPEN' && (
                               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">

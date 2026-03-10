@@ -1,18 +1,27 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Coins,
-  Clock,
-  Trophy,
-  Loader2,
-  Hash,
-  Target,
-  Zap,
-  X,
-} from "lucide-react";
+import { Coins, Clock, Loader2, Target } from "lucide-react";
 import { toast } from "sonner";
+
+type FixedSlotWindow = {
+  key: string;
+  label: string;
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+};
+
+const FIXED_SLOT_WINDOWS: FixedSlotWindow[] = [
+  { key: "morning", label: "Morning", startHour: 9, startMinute: 0, endHour: 12, endMinute: 0 },
+  { key: "afternoon", label: "Afternoon", startHour: 13, startMinute: 0, endHour: 15, endMinute: 0 },
+  { key: "evening", label: "Evening", startHour: 16, startMinute: 0, endHour: 19, endMinute: 0 },
+  { key: "night", label: "Night", startHour: 19, startMinute: 0, endHour: 22, endMinute: 0 },
+];
+
+const RESULT_DELAY_MS = 5 * 60 * 1000;
 
 const HomePage = () => {
   const { user } = useAuth();
@@ -27,7 +36,48 @@ const HomePage = () => {
   const [betConfirmOpen, setBetConfirmOpen] = useState(false);
   const [myBets, setMyBets] = useState<any[]>([]);
 
-  // ================= FETCH =================
+  const buildWindowDate = useCallback(
+    (baseDate: Date, window: FixedSlotWindow, forEnd = false) => {
+      const next = new Date(baseDate);
+      next.setHours(
+        forEnd ? window.endHour : window.startHour,
+        forEnd ? window.endMinute : window.startMinute,
+        0,
+        0,
+      );
+      return next;
+    },
+    [],
+  );
+
+  const formatWindowTime = useCallback((date: Date) => {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }, []);
+
+  const getWindowKeyFromTimes = useCallback((start: Date, end: Date, useUtc = false) => {
+    const startHour = useUtc ? start.getUTCHours() : start.getHours();
+    const startMinute = useUtc ? start.getUTCMinutes() : start.getMinutes();
+    const endHour = useUtc ? end.getUTCHours() : end.getHours();
+    const endMinute = useUtc ? end.getUTCMinutes() : end.getMinutes();
+
+    const matchedWindow = FIXED_SLOT_WINDOWS.find(
+      (window) =>
+        window.startHour === startHour &&
+        window.startMinute === startMinute &&
+        window.endHour === endHour &&
+        window.endMinute === endMinute,
+    );
+
+    return matchedWindow?.key ?? null;
+  }, []);
+
+  const isLiveSlot = useCallback((slot: any) => {
+    const now = Date.now();
+    const start = new Date(slot.startTime).getTime();
+    const end = new Date(slot.endTime).getTime();
+    return slot.status === "OPEN" && now >= start && now < end;
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
       const [walletRes, slotsRes, betsRes] = await Promise.all([
@@ -40,6 +90,7 @@ const HomePage = () => {
       setAllSlots(slotsRes);
       setMyBets(betsRes.slice(0, 20));
     } catch {
+      // no-op
     } finally {
       setLoading(false);
     }
@@ -51,7 +102,73 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // ================= COUNTDOWN =================
+  const slots = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const todaySlots = allSlots.filter((slot) => {
+      const slotStart = new Date(slot.startTime);
+      return slotStart >= today && slotStart < tomorrow;
+    });
+
+    const slotsByWindow = todaySlots.reduce((acc: Record<string, any[]>, slot: any) => {
+      const start = new Date(slot.startTime);
+      const end = new Date(slot.endTime);
+      const key = getWindowKeyFromTimes(start, end, false) ?? getWindowKeyFromTimes(start, end, true);
+
+      if (!key) return acc;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(slot);
+      return acc;
+    }, {});
+
+    return FIXED_SLOT_WINDOWS.map((window) => {
+      const windowStart = buildWindowDate(today, window, false);
+      const windowEnd = buildWindowDate(today, window, true);
+      const candidates = slotsByWindow[window.key] || [];
+
+      const slot = candidates
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt || b.createdAt || 0).getTime() -
+            new Date(a.updatedAt || a.createdAt || 0).getTime(),
+        )[0];
+
+      const label = `${window.label} (${formatWindowTime(windowStart)} - ${formatWindowTime(windowEnd)})`;
+
+      if (slot) {
+        return { ...slot, windowLabel: label, isPlaceholder: false };
+      }
+
+      return {
+        _id: `placeholder-${window.key}-${today.toISOString().slice(0, 10)}`,
+        startTime: windowStart.toISOString(),
+        endTime: windowEnd.toISOString(),
+        status: "UPCOMING",
+        betAmount: null,
+        winAmount: null,
+        winningNumber: null,
+        windowLabel: label,
+        isPlaceholder: true,
+      };
+    });
+  }, [allSlots, buildWindowDate, formatWindowTime, getWindowKeyFromTimes]);
+
+  useEffect(() => {
+    if (!selectedSlot) return;
+
+    const latestSlot = allSlots.find((slot) => slot._id === selectedSlot._id);
+    if (!latestSlot || !isLiveSlot(latestSlot)) {
+      setSelectedSlot(null);
+      setBetConfirmOpen(false);
+      setSelectedNumber(null);
+    }
+  }, [allSlots, isLiveSlot, selectedSlot]);
+
   useEffect(() => {
     if (!selectedSlot?.endTime) return;
 
@@ -63,9 +180,7 @@ const HomePage = () => {
       }
       const m = Math.floor(diff / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(
-        `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
-      );
+      setTimeLeft(`${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`);
     };
 
     update();
@@ -73,7 +188,6 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [selectedSlot]);
 
-  // ================= PLACE BET =================
   const placeBet = async () => {
     if (selectedNumber === null || !selectedSlot) return;
 
@@ -81,8 +195,8 @@ const HomePage = () => {
     try {
       await api.placeBet(selectedSlot._id, selectedNumber);
 
-      toast.success(`🎯 Bet placed on #${selectedNumber}!`, {
-        description: `${selectedSlot.betAmount} coins deducted. Win ${selectedSlot.winAmount} coins!`,
+      toast.success(`Bet placed on #${selectedNumber}`, {
+        description: `${selectedSlot.betAmount} coins deducted. Win ${selectedSlot.winAmount} coins.`,
       });
 
       setBetConfirmOpen(false);
@@ -94,35 +208,6 @@ const HomePage = () => {
       setBetting(false);
     }
   };
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-
-  const slots = allSlots
-    .filter((slot) => {
-      const slotStart = new Date(slot.startTime);
-      return slotStart >= today && slotStart < tomorrow;
-    })
-    .sort((a, b) => {
-      const priority: Record<string, number> = {
-        OPEN: 0,
-        RESULT_DECLARED: 1,
-        CLOSED: 2,
-        UPCOMING: 3,
-      };
-
-      const aPriority = priority[a.status] ?? 4;
-      const bPriority = priority[b.status] ?? 4;
-
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-
-      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-    });
 
   const activeBets = selectedSlot
     ? myBets.filter((b) => {
@@ -148,39 +233,33 @@ const HomePage = () => {
 
   return (
     <div className="space-y-4 p-4 pb-28">
-      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-white/40">Welcome back 👋</p>
-          <h1 className="text-xl font-bold text-white font-display">
-            {user?.name || "Player"}
-          </h1>
+          <p className="text-xs text-white/40">Welcome back</p>
+          <h1 className="text-xl font-bold text-white font-display">{user?.name || "Player"}</h1>
         </div>
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2"
         >
           <Coins className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-primary font-display">
-            {balance ?? 0}
-          </span>
+          <span className="text-sm font-bold text-primary font-display">{balance ?? 0}</span>
           <span className="text-xs text-white/40">coins</span>
         </motion.div>
       </div>
 
-      {/* ================= MULTIPLE SLOT CARDS ================= */}
       {slots.map((slot) => {
         const isSelected = selectedSlot?._id === slot._id;
         const now = Date.now();
-        const start = new Date(slot.startTime).getTime(); ``
+        const start = new Date(slot.startTime).getTime();
         const end = new Date(slot.endTime).getTime();
 
+        const isLive = slot.status === "OPEN" && now >= start && now < end;
         const isUpcoming = now < start;
-        const isLive = slot.status === "OPEN";
-        const isClosed = slot.status === "CLOSED";
-        const isResult = slot.status === "RESULT_DECLARED";
+        const isResult = slot.status === "RESULT_DECLARED" && now >= end + RESULT_DELAY_MS;
+        const isClosed = !isLive && !isUpcoming && !isResult;
 
-        const isDisabled = !isLive;
+        const isDisabled = !isLive || slot.isPlaceholder;
 
         return (
           <motion.div
@@ -188,21 +267,20 @@ const HomePage = () => {
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative overflow-hidden rounded-2xl p-5 border transition-all
-${isLive
-                ? "bg-gradient-to-br from-[hsl(42,92%,25%)] to-[hsl(220,20%,12%)] border-primary/40 shadow-[0_0_20px_rgba(255,200,0,0.2)]"
+            className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
+              isLive
+                ? "border-primary/40 bg-gradient-to-br from-[hsl(42,92%,25%)] to-[hsl(220,20%,12%)] shadow-[0_0_20px_rgba(255,200,0,0.2)]"
                 : isUpcoming
-                  ? "bg-[hsl(220,20%,12%)] border-yellow-500/30"
+                  ? "border-yellow-500/30 bg-[hsl(220,20%,12%)]"
                   : isClosed
-                    ? "bg-[hsl(220,20%,10%)] border-red-500/30 opacity-70"
-                    : "bg-[hsl(220,20%,10%)] border-blue-500/30 opacity-70"
-              }
-`}
+                    ? "border-red-500/30 bg-[hsl(220,20%,10%)] opacity-70"
+                    : "border-blue-500/30 bg-[hsl(220,20%,10%)] opacity-70"
+            }`}
           >
             <div
-              className={`${isLive ? "cursor-pointer" : "cursor-not-allowed"}`}
+              className={isLive ? "cursor-pointer" : "cursor-not-allowed"}
               onClick={() => {
-                if (isLive) {
+                if (isLive && !slot.isPlaceholder) {
                   setSelectedSlot(isSelected ? null : slot);
                 }
               }}
@@ -210,24 +288,26 @@ ${isLive
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${isLive
-                      ? "bg-green-500/20 text-green-400"
-                      : isUpcoming
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : isClosed
-                          ? "bg-red-500/20 text-red-400"
-                          : "bg-blue-500/20 text-blue-400"
-                      }`}
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
+                      isLive
+                        ? "bg-green-500/20 text-green-400"
+                        : isUpcoming
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : isClosed
+                            ? "bg-red-500/20 text-red-400"
+                            : "bg-blue-500/20 text-blue-400"
+                    }`}
                   >
                     <span
-                      className={`h-1.5 w-1.5 rounded-full ${isLive
-                        ? "bg-green-400"
-                        : isUpcoming
-                          ? "bg-yellow-400"
-                          : isClosed
-                            ? "bg-red-400"
-                            : "bg-blue-400"
-                        }`}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isLive
+                          ? "bg-green-400"
+                          : isUpcoming
+                            ? "bg-yellow-400"
+                            : isClosed
+                              ? "bg-red-400"
+                              : "bg-blue-400"
+                      }`}
                     />
 
                     <span className="text-xs font-bold">
@@ -242,42 +322,33 @@ ${isLive
                 {isSelected && (
                   <div className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5">
                     <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-mono text-lg font-bold text-primary">
-                      {timeLeft || "--:--"}
-                    </span>
+                    <span className="font-mono text-lg font-bold text-primary">{timeLeft || "--:--"}</span>
                   </div>
                 )}
               </div>
 
-              <h2 className="text-lg font-bold text-white font-display">
-                Pick Your Number!
-              </h2>
+              <h2 className="text-lg font-bold text-white font-display">{slot.windowLabel}</h2>
 
               <div className="mt-1 text-sm text-white/50">
-                Bet{" "}
-                <span className="font-bold text-primary">
-                  {slot.betAmount} coins
-                </span>{" "}
-                · Win{" "}
-                <span className="font-bold text-green-400">
-                  {slot.winAmount} coins
-                </span>
+                Bet <span className="font-bold text-primary">{slot.betAmount ?? "--"} coins</span> · Win{" "}
+                <span className="font-bold text-green-400">{slot.winAmount ?? "--"} coins</span>
 
-                {slot.status === "RESULT_DECLARED" && (
-                  <p className="mt-1 text-xs text-primary font-bold">
-                    🏆 Winning Number: #{slot.winningNumber}
-                  </p>
+                {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
+                  <p className="mt-1 text-xs font-bold text-primary">Winning Number: #{slot.winningNumber}</p>
                 )}
 
                 {isUpcoming && (
                   <p className="mt-1 text-xs text-yellow-400">
-                    Starts at {new Date(slot.startTime).toLocaleTimeString()}
+                    Starts at {new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                   </p>
+                )}
+
+                {isClosed && !isResult && (
+                  <p className="mt-1 text-xs text-red-400">Result will be declared in 5 minutes after close.</p>
                 )}
               </div>
             </div>
 
-            {/* ================= NUMBER GRID ================= */}
             <AnimatePresence>
               {isSelected && (
                 <motion.div
@@ -299,12 +370,13 @@ ${isLive
                             setBetConfirmOpen(true);
                           }}
                           disabled={isDisabled}
-                          className={`aspect-square rounded-lg text-xs font-bold transition-all relative ${isDisabled
-                            ? "bg-white/5 text-white/20 cursor-not-allowed"
-                            : isMyBet
-                              ? "bg-primary/20 text-primary ring-1 ring-primary/40"
-                              : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-                            }`}
+                          className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${
+                            isDisabled
+                              ? "cursor-not-allowed bg-white/5 text-white/20"
+                              : isMyBet
+                                ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                                : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                          }`}
                         >
                           {i}
                           {isMyBet && (
@@ -321,7 +393,6 @@ ${isLive
         );
       })}
 
-      {/* ================= CONFIRM MODAL ================= */}
       <AnimatePresence>
         {betConfirmOpen && selectedSlot && selectedNumber !== null && (
           <motion.div
@@ -340,21 +411,17 @@ ${isLive
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               exit={{ y: 80 }}
-              className="w-full max-w-sm rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6 mb-4"
+              className="mb-4 w-full max-w-sm rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
             >
-              <h2 className="text-lg font-bold text-white mb-5">Confirm Bet</h2>
+              <h2 className="mb-5 text-lg font-bold text-white">Confirm Bet</h2>
 
-              <div className="text-center mb-5">
-                <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-3xl bg-gradient-gold gold-glow">
-                  <span className="text-3xl font-bold text-black">
-                    {selectedNumber}
-                  </span>
+              <div className="mb-5 text-center">
+                <div className="gold-glow mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-gold">
+                  <span className="text-3xl font-bold text-black">{selectedNumber}</span>
                 </div>
               </div>
 
-              <p className="text-sm text-white/50 text-center mb-4">
-                Cost: {selectedSlot.betAmount} coins
-              </p>
+              <p className="mb-4 text-center text-sm text-white/50">Cost: {selectedSlot.betAmount} coins</p>
 
               <button
                 onClick={placeBet}

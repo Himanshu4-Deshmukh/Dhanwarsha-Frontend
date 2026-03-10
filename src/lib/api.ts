@@ -39,11 +39,14 @@ export const api = {
   // Slots
   getActiveSlot: () => request<any>('/slots/active'),
   getSlots: () => request<any[]>('/slots'),
+  getTodaySlots: () => request<any[]>('/slots/today'),
   getSlot: (id: string) => request<any>(`/slots/${id}`),
   createSlot: (data: { startTime: string; endTime: string; betAmount: number; winAmount: number }) =>
     request<any>('/slots', { method: 'POST', body: JSON.stringify(data) }),
   setWinningNumber: (slotId: string, winningNumber: number) =>
     request<any>(`/slots/${slotId}/winning-number`, { method: 'POST', body: JSON.stringify({ winningNumber }) }),
+  updateSlotAmounts: (slotId: string, betAmount: number, winAmount: number) =>
+    request<any>(`/slots/${slotId}/amounts`, { method: 'PATCH', body: JSON.stringify({ betAmount, winAmount }) }),
   getSlotExposure: (slotId: string) => request<any>(`/slots/${slotId}/exposure`),
   
   // Bets
