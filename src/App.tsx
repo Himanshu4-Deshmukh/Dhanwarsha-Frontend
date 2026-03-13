@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSlots from "./pages/admin/AdminSlots";
+import AdminPastSlots from "./pages/admin/AdminPastSlots";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminBets from "./pages/admin/AdminBets";
@@ -78,6 +79,7 @@ const App = () => (
             >
               <Route index element={<AdminDashboard />} />
               <Route path="slots" element={<AdminSlots />} />
+              <Route path="past-slots" element={<AdminPastSlots />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="bets" element={<AdminBets />} />

@@ -31,11 +31,10 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
   OPEN: { bg: 'bg-green-500/10', text: 'text-green-400', dot: 'bg-green-400' },
   CLOSED: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
   RESULT_DECLARED: { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400' },
-  UPCOMING: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400' },
 };
 
-export default function AdminSlots() {
-  const [todaySlots, setTodaySlots] = useState<SlotRecord[]>([]);
+export default function AdminPastSlots() {
+  const [pastSlots, setPastSlots] = useState<SlotRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [exposure, setExposure] = useState<Record<string, any>>({});
@@ -44,33 +43,33 @@ export default function AdminSlots() {
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
   const [updatingAmounts, setUpdatingAmounts] = useState<Record<string, boolean>>({});
 
-  const fetchSlots = useCallback(async (silent = false) => {
+  const fetchPastSlots = useCallback(async (silent = false) => {
     try {
       if (!silent) {
         setLoading(true);
       }
 
-      const todayData = await api.getTodaySlots();
-      const sortedToday = [...todayData].sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
-      );
+      const [todayData, allData] = await Promise.all([api.getTodaySlots(), api.getSlots()]);
+      const todayIds = new Set(todayData.filter((slot) => !slot.isPlaceholder).map((slot) => slot._id));
 
-      setTodaySlots(sortedToday);
+      const nonToday = allData
+        .filter((slot) => !todayIds.has(slot._id))
+        .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
 
-      const nextAmounts = sortedToday
-        .filter((slot) => !slot.isPlaceholder)
-        .reduce((acc: Record<string, { betAmount: string; winAmount: string }>, slot) => {
-          acc[slot._id] = {
-            betAmount: String(slot.betAmount ?? 10),
-            winAmount: String(slot.winAmount ?? 95),
-          };
-          return acc;
-        }, {});
+      setPastSlots(nonToday);
+
+      const nextAmounts = nonToday.reduce((acc: Record<string, { betAmount: string; winAmount: string }>, slot) => {
+        acc[slot._id] = {
+          betAmount: String(slot.betAmount ?? 10),
+          winAmount: String(slot.winAmount ?? 95),
+        };
+        return acc;
+      }, {});
 
       setAmountInputs(nextAmounts);
     } catch {
       if (!silent) {
-        toast.error('Failed to fetch slots');
+        toast.error('Failed to fetch past slots');
       }
     } finally {
       if (!silent) {
@@ -80,10 +79,10 @@ export default function AdminSlots() {
   }, []);
 
   useEffect(() => {
-    fetchSlots();
-    const interval = setInterval(() => fetchSlots(true), 15000);
+    fetchPastSlots();
+    const interval = setInterval(() => fetchPastSlots(true), 15000);
     return () => clearInterval(interval);
-  }, [fetchSlots]);
+  }, [fetchPastSlots]);
 
   const fetchExposure = async (slotId: string) => {
     try {
@@ -94,18 +93,14 @@ export default function AdminSlots() {
     }
   };
 
-  const toggleExpand = (slot: SlotRecord) => {
-    if (slot.isPlaceholder) {
-      return;
-    }
-
-    if (expandedSlot === slot._id) {
+  const toggleExpand = (slotId: string) => {
+    if (expandedSlot === slotId) {
       setExpandedSlot(null);
       return;
     }
 
-    setExpandedSlot(slot._id);
-    fetchExposure(slot._id);
+    setExpandedSlot(slotId);
+    fetchExposure(slotId);
   };
 
   const setWinningNumber = async (slotId: string) => {
@@ -119,7 +114,7 @@ export default function AdminSlots() {
     try {
       await api.setWinningNumber(slotId, num);
       toast.success(`Winning number ${num} set`);
-      await fetchSlots(true);
+      await fetchPastSlots(true);
     } catch (err: any) {
       toast.error(err.message || 'Failed to set winning number');
     } finally {
@@ -146,7 +141,7 @@ export default function AdminSlots() {
     try {
       await api.updateSlotAmounts(slotId, betAmount, winAmount);
       toast.success(`Updated amounts to ${betAmount}-${winAmount}`);
-      await fetchSlots(true);
+      await fetchPastSlots(true);
     } catch (err: any) {
       toast.error(err.message || 'Failed to update slot amounts');
     } finally {
@@ -154,11 +149,21 @@ export default function AdminSlots() {
     }
   };
 
+  const groupedPastSlots: [string, SlotRecord[]][] = Object.entries(
+    pastSlots.reduce<Record<string, SlotRecord[]>>((acc, slot) => {
+      const date = new Date(slot.startTime).toDateString();
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(slot);
+      return acc;
+    }, {}),
+  ).sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
+
   const renderSlotCard = (slot: SlotRecord, index: number) => {
     const sc = STATUS_COLORS[slot.status] || STATUS_COLORS.CLOSED;
     const isExpanded = expandedSlot === slot._id;
     const slotExposure = exposure[slot._id];
-    const canExpand = !slot.isPlaceholder;
 
     return (
       <motion.div
@@ -193,19 +198,17 @@ export default function AdminSlots() {
             </div>
           </div>
 
-          {canExpand && (
-            <button
-              onClick={() => toggleExpand(slot)}
-              className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition-colors hover:text-white"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            </button>
-          )}
+          <button
+            onClick={() => toggleExpand(slot._id)}
+            className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition-colors hover:text-white"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
         </div>
 
         <AnimatePresence>
-          {isExpanded && canExpand && (
+          {isExpanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -319,13 +322,11 @@ export default function AdminSlots() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-white">Today Slots</h1>
-          <p className="mt-1 text-sm text-white/40">
-            Only these fixed windows are shown: 9 AM-12 PM, 1 PM-4 PM, 5 PM-8 PM, 9 PM-12 AM.
-          </p>
+          <h1 className="font-display text-2xl font-bold text-white">Past Slots</h1>
+          <p className="mt-1 text-sm text-white/40">All slots except today&apos;s fixed 4 windows.</p>
         </div>
         <button
-          onClick={() => fetchSlots()}
+          onClick={() => fetchPastSlots()}
           className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/60 transition-colors hover:text-white"
         >
           <RefreshCw className="h-4 w-4" />
@@ -337,17 +338,27 @@ export default function AdminSlots() {
         <div className="flex h-40 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      ) : groupedPastSlots.length === 0 ? (
+        <div className="rounded-xl border border-white/5 bg-white/5 py-10 text-center">
+          <Clock className="mx-auto mb-3 h-8 w-8 text-white/20" />
+          <p className="text-white/40">No past slots yet.</p>
+        </div>
       ) : (
-        <section className="space-y-3">
-          {todaySlots.length === 0 ? (
-            <div className="rounded-xl border border-white/5 bg-white/5 py-10 text-center">
-              <Clock className="mx-auto mb-3 h-8 w-8 text-white/20" />
-              <p className="text-white/40">No slots found for today.</p>
+        <div className="space-y-6">
+          {groupedPastSlots.map(([date, daySlots]) => (
+            <div key={date} className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-white/40">
+                {new Date(date).toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </h3>
+              {daySlots.map((slot, i) => renderSlotCard(slot, i))}
             </div>
-          ) : (
-            <div className="space-y-3">{todaySlots.map((slot, i) => renderSlotCard(slot, i))}</div>
-          )}
-        </section>
+          ))}
+        </div>
       )}
     </div>
   );

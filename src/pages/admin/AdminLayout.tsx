@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   Layers,
+  History,
   CreditCard,
   TrendingUp,
   LogOut,
@@ -18,7 +19,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/slots", label: "Slots", icon: Layers },
+  { to: "/admin/slots", label: "Today Slots", icon: Layers },
+  { to: "/admin/past-slots", label: "Past Slots", icon: History },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/payments", label: "Payments", icon: CreditCard },
   { to: "/admin/bets", label: "All Bets", icon: TrendingUp },

@@ -16,9 +16,9 @@ type FixedSlotWindow = {
 
 const FIXED_SLOT_WINDOWS: FixedSlotWindow[] = [
   { key: "morning", label: "Morning", startHour: 9, startMinute: 0, endHour: 12, endMinute: 0 },
-  { key: "afternoon", label: "Afternoon", startHour: 13, startMinute: 0, endHour: 15, endMinute: 0 },
-  { key: "evening", label: "Evening", startHour: 16, startMinute: 0, endHour: 19, endMinute: 0 },
-  { key: "night", label: "Night", startHour: 19, startMinute: 0, endHour: 22, endMinute: 0 },
+  { key: "afternoon", label: "Afternoon", startHour: 13, startMinute: 0, endHour: 16, endMinute: 0 },
+  { key: "evening", label: "Evening", startHour: 17, startMinute: 0, endHour: 20, endMinute: 0 },
+  { key: "night", label: "Night", startHour: 21, startMinute: 0, endHour: 24, endMinute: 0 },
 ];
 
 const RESULT_DELAY_MS = 5 * 60 * 1000;
@@ -57,8 +57,9 @@ const HomePage = () => {
   const getWindowKeyFromTimes = useCallback((start: Date, end: Date, useUtc = false) => {
     const startHour = useUtc ? start.getUTCHours() : start.getHours();
     const startMinute = useUtc ? start.getUTCMinutes() : start.getMinutes();
-    const endHour = useUtc ? end.getUTCHours() : end.getHours();
+    const rawEndHour = useUtc ? end.getUTCHours() : end.getHours();
     const endMinute = useUtc ? end.getUTCMinutes() : end.getMinutes();
+    const endHour = rawEndHour === 0 && endMinute === 0 && end.getTime() > start.getTime() ? 24 : rawEndHour;
 
     const matchedWindow = FIXED_SLOT_WINDOWS.find(
       (window) =>
@@ -82,7 +83,7 @@ const HomePage = () => {
     try {
       const [walletRes, slotsRes, betsRes] = await Promise.all([
         api.getBalance(),
-        api.getSlots(),
+        api.getTodaySlots(),
         api.getMyBets().catch(() => []),
       ]);
 

@@ -1,81 +1,120 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://dhanwarsha.adonservice.in/api';
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
+// const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8001/api";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('token');
-  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const token = localStorage.getItem("token");
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers: Record<string, string> = {
     ...((options.headers as Record<string, string>) || {}),
   };
-  if (!isFormData && !headers['Content-Type']) {
-    headers['Content-Type'] = 'application/json';
+  if (!isFormData && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
   }
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  
+
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Request failed' }));
+    const err = await res.json().catch(() => ({ message: "Request failed" }));
     throw new Error(err.message || `Error ${res.status}`);
   }
-  
+
   return res.json();
 }
 
 export const api = {
   // Auth
   login: (email: string, password: string) =>
-    request<{ access_token: string; user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    request<{ access_token: string; user: any }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
   signup: (data: { name: string; email: string; password: string }) =>
-    request<{ access_token: string; user: any }>('/auth/signup', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ access_token: string; user: any }>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   // User
-  getProfile: () => request<any>('/users/profile'),
-  
+  getProfile: () => request<any>("/users/profile"),
+
   // Wallet
-  getWallet: () => request<{ balance: number }>('/wallet'),
-  getBalance: () => request<{ balance: number }>('/wallet/balance'),
-  getTransactions: () => request<any[]>('/wallet-transactions'),
-  
+  getWallet: () => request<{ balance: number }>("/wallet"),
+  getBalance: () => request<{ balance: number }>("/wallet/balance"),
+  getTransactions: () => request<any[]>("/wallet-transactions"),
+
   // Slots
-  getActiveSlot: () => request<any>('/slots/active'),
-  getSlots: () => request<any[]>('/slots'),
-  getTodaySlots: () => request<any[]>('/slots/today'),
+  getActiveSlot: () => request<any>("/slots/active"),
+  getSlots: () => request<any[]>("/slots"),
+  getTodaySlots: () => request<any[]>("/slots/today"),
   getSlot: (id: string) => request<any>(`/slots/${id}`),
-  createSlot: (data: { startTime: string; endTime: string; betAmount: number; winAmount: number }) =>
-    request<any>('/slots', { method: 'POST', body: JSON.stringify(data) }),
+  createSlot: (data: {
+    startTime: string;
+    endTime: string;
+    betAmount: number;
+    winAmount: number;
+  }) => request<any>("/slots", { method: "POST", body: JSON.stringify(data) }),
   setWinningNumber: (slotId: string, winningNumber: number) =>
-    request<any>(`/slots/${slotId}/winning-number`, { method: 'POST', body: JSON.stringify({ winningNumber }) }),
+    request<any>(`/slots/${slotId}/winning-number`, {
+      method: "POST",
+      body: JSON.stringify({ winningNumber }),
+    }),
   updateSlotAmounts: (slotId: string, betAmount: number, winAmount: number) =>
-    request<any>(`/slots/${slotId}/amounts`, { method: 'PATCH', body: JSON.stringify({ betAmount, winAmount }) }),
-  getSlotExposure: (slotId: string) => request<any>(`/slots/${slotId}/exposure`),
-  
+    request<any>(`/slots/${slotId}/amounts`, {
+      method: "PATCH",
+      body: JSON.stringify({ betAmount, winAmount }),
+    }),
+  getSlotExposure: (slotId: string) =>
+    request<any>(`/slots/${slotId}/exposure`),
+
   // Bets
   placeBet: (slotId: string, number: number) =>
-    request<any>('/bets', { method: 'POST', body: JSON.stringify({ slotId, number }) }),
-  getMyBets: () => request<any[]>('/bets/my-bets'),
-  
+    request<any>("/bets", {
+      method: "POST",
+      body: JSON.stringify({ slotId, number }),
+    }),
+  getMyBets: () => request<any[]>("/bets/my-bets"),
+
   // Payments
   uploadPaymentScreenshot: (file: File) => {
     const formData = new FormData();
-    formData.append('screenshot', file);
-    return request<{ screenshotUrl: string }>('/payments/upload-screenshot', { method: 'POST', body: formData });
+    formData.append("screenshot", file);
+    return request<{ screenshotUrl: string }>("/payments/upload-screenshot", {
+      method: "POST",
+      body: formData,
+    });
   },
   requestPayment: (amount: number, screenshotUrl: string) =>
-    request<any>('/payments/request', { method: 'POST', body: JSON.stringify({ amount, screenshotUrl }) }),
-  getMyPayments: () => request<any[]>('/payments/my-requests'),
+    request<any>("/payments/request", {
+      method: "POST",
+      body: JSON.stringify({ amount, screenshotUrl }),
+    }),
+  getMyPayments: () => request<any[]>("/payments/my-requests"),
 
   // Admin
   admin: {
-    getAllUsers: () => request<any[]>('/admin/users'),
-    getAllBets: () => request<any[]>('/admin/bets'),
-    getAllTransactions: () => request<any[]>('/admin/transactions'),
-    getAllPaymentRequests: () => request<any[]>('/admin/payment-requests'),
+    getAllUsers: () => request<any[]>("/admin/users"),
+    getAllBets: () => request<any[]>("/admin/bets"),
+    getAllTransactions: () => request<any[]>("/admin/transactions"),
+    getAllPaymentRequests: () => request<any[]>("/admin/payment-requests"),
     approvePayment: (id: string, adminRemark?: string) =>
-      request<any>(`/admin/payment-requests/${id}/approve`, { method: 'POST', body: JSON.stringify({ adminRemark: adminRemark || 'Approved' }) }),
+      request<any>(`/admin/payment-requests/${id}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ adminRemark: adminRemark || "Approved" }),
+      }),
     rejectPayment: (id: string, adminRemark?: string) =>
-      request<any>(`/admin/payment-requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ adminRemark: adminRemark || 'Rejected' }) }),
+      request<any>(`/admin/payment-requests/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ adminRemark: adminRemark || "Rejected" }),
+      }),
     creditWallet: (userId: string, amount: number) =>
-      request<any>('/admin/credit-wallet', { method: 'POST', body: JSON.stringify({ userId, amount }) }),
-    getSlotProfit: (slotId: string) => request<any>(`/admin/slots/${slotId}/profit`),
+      request<any>("/admin/credit-wallet", {
+        method: "POST",
+        body: JSON.stringify({ userId, amount }),
+      }),
+    getSlotProfit: (slotId: string) =>
+      request<any>(`/admin/slots/${slotId}/profit`),
   },
 };
