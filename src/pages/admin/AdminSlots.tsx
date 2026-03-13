@@ -24,7 +24,139 @@ type SlotRecord = {
   winAmount: number | null;
   winningNumber?: number | null;
   isPlaceholder?: boolean;
+  windowKey?: string;
   windowLabel?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type FixedSlotWindow = {
+  key: string;
+  label: string;
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+};
+
+const FIXED_SLOT_WINDOWS: FixedSlotWindow[] = [
+  { key: 'morning', label: 'Morning', startHour: 9, startMinute: 0, endHour: 12, endMinute: 0 },
+  { key: 'afternoon', label: 'Afternoon', startHour: 13, startMinute: 0, endHour: 16, endMinute: 0 },
+  { key: 'evening', label: 'Evening', startHour: 17, startMinute: 0, endHour: 20, endMinute: 0 },
+  { key: 'night', label: 'Night', startHour: 21, startMinute: 0, endHour: 24, endMinute: 0 },
+];
+
+const RESULT_DELAY_MS = 5 * 60 * 1000;
+
+const buildWindowDate = (baseDate: Date, window: FixedSlotWindow, forEnd = false) => {
+  const next = new Date(baseDate);
+  next.setHours(forEnd ? window.endHour : window.startHour, forEnd ? window.endMinute : window.startMinute, 0, 0);
+  return next;
+};
+
+const formatWindowTime = (date: Date) => date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+const getWindowKeyFromTimes = (start: Date, end: Date, useUtc = false) => {
+  const startHour = useUtc ? start.getUTCHours() : start.getHours();
+  const startMinute = useUtc ? start.getUTCMinutes() : start.getMinutes();
+  const rawEndHour = useUtc ? end.getUTCHours() : end.getHours();
+  const endMinute = useUtc ? end.getUTCMinutes() : end.getMinutes();
+  const endHour = rawEndHour === 0 && endMinute === 0 && end.getTime() > start.getTime() ? 24 : rawEndHour;
+
+  const matchedWindow = FIXED_SLOT_WINDOWS.find(
+    (window) =>
+      window.startHour === startHour &&
+      window.startMinute === startMinute &&
+      window.endHour === endHour &&
+      window.endMinute === endMinute,
+  );
+
+  return matchedWindow?.key ?? null;
+};
+
+const toEffectiveStatus = (slot: SlotRecord, nowMs: number) => {
+  const start = new Date(slot.startTime).getTime();
+  const end = new Date(slot.endTime).getTime();
+  const resultVisible = nowMs >= end + RESULT_DELAY_MS;
+
+  if (slot.status === 'RESULT_DECLARED' && resultVisible) {
+    return 'RESULT_DECLARED';
+  }
+
+  if (nowMs < start) {
+    return 'UPCOMING';
+  }
+
+  if (nowMs >= end) {
+    return 'CLOSED';
+  }
+
+  return 'OPEN';
+};
+
+const normalizeTodaySlots = (slots: SlotRecord[]): SlotRecord[] => {
+  const sorted = [...slots].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  const slotsByWindow: Record<string, SlotRecord[]> = {};
+  const unmatched: SlotRecord[] = [];
+
+  for (const slot of sorted) {
+    const start = new Date(slot.startTime);
+    const end = new Date(slot.endTime);
+    const key = slot.windowKey || getWindowKeyFromTimes(start, end, false) || getWindowKeyFromTimes(start, end, true);
+
+    if (!key) {
+      unmatched.push(slot);
+      continue;
+    }
+
+    if (!slotsByWindow[key]) {
+      slotsByWindow[key] = [];
+    }
+    slotsByWindow[key].push(slot);
+  }
+
+  const fallbackQueue = [...unmatched];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayKey = today.toISOString().slice(0, 10);
+
+  return FIXED_SLOT_WINDOWS.map((window) => {
+    const matched = (slotsByWindow[window.key] || [])
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt || b.createdAt || 0).getTime() -
+          new Date(a.updatedAt || a.createdAt || 0).getTime(),
+      )[0];
+    const fallback = fallbackQueue.shift();
+    const slot = matched || fallback;
+
+    const windowStart = buildWindowDate(today, window, false);
+    const windowEnd = buildWindowDate(today, window, true);
+    const windowLabel = `${window.label} (${formatWindowTime(windowStart)} - ${formatWindowTime(windowEnd)})`;
+
+    if (slot) {
+      return {
+        ...slot,
+        windowKey: window.key,
+        windowLabel,
+        isPlaceholder: false,
+      };
+    }
+
+    return {
+      _id: `placeholder-${window.key}-${dayKey}`,
+      startTime: windowStart.toISOString(),
+      endTime: windowEnd.toISOString(),
+      status: 'UPCOMING',
+      betAmount: null,
+      winAmount: null,
+      winningNumber: null,
+      isPlaceholder: true,
+      windowKey: window.key,
+      windowLabel,
+    };
+  });
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
@@ -51,13 +183,11 @@ export default function AdminSlots() {
       }
 
       const todayData = await api.getTodaySlots();
-      const sortedToday = [...todayData].sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
-      );
+      const normalizedToday = normalizeTodaySlots(todayData);
 
-      setTodaySlots(sortedToday);
+      setTodaySlots(normalizedToday);
 
-      const nextAmounts = sortedToday
+      const nextAmounts = normalizedToday
         .filter((slot) => !slot.isPlaceholder)
         .reduce((acc: Record<string, { betAmount: string; winAmount: string }>, slot) => {
           acc[slot._id] = {
@@ -155,10 +285,16 @@ export default function AdminSlots() {
   };
 
   const renderSlotCard = (slot: SlotRecord, index: number) => {
-    const sc = STATUS_COLORS[slot.status] || STATUS_COLORS.CLOSED;
+    const nowMs = Date.now();
+    const start = new Date(slot.startTime).getTime();
+    const end = new Date(slot.endTime).getTime();
+    const effectiveStatus = toEffectiveStatus(slot, nowMs);
+    const sc = STATUS_COLORS[effectiveStatus] || STATUS_COLORS.CLOSED;
     const isExpanded = expandedSlot === slot._id;
     const slotExposure = exposure[slot._id];
     const canExpand = !slot.isPlaceholder;
+    const canUpdateAmounts = !slot.isPlaceholder && nowMs < start;
+    const canSetWinning = !slot.isPlaceholder && slot.status !== 'RESULT_DECLARED' && nowMs < end;
 
     return (
       <motion.div
@@ -170,8 +306,8 @@ export default function AdminSlots() {
       >
         <div className="flex items-center gap-4 p-4">
           <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${sc.bg}`}>
-            <div className={`h-1.5 w-1.5 rounded-full ${sc.dot} ${slot.status === 'OPEN' ? 'animate-pulse' : ''}`} />
-            <span className={`text-xs font-semibold ${sc.text}`}>{slot.status}</span>
+            <div className={`h-1.5 w-1.5 rounded-full ${sc.dot} ${effectiveStatus === 'OPEN' ? 'animate-pulse' : ''}`} />
+            <span className={`text-xs font-semibold ${sc.text}`}>{effectiveStatus}</span>
           </div>
 
           <div className="min-w-0 flex-1">
@@ -253,7 +389,7 @@ export default function AdminSlots() {
                     />
                     <button
                       onClick={() => updateSlotAmounts(slot._id)}
-                      disabled={updatingAmounts[slot._id]}
+                      disabled={updatingAmounts[slot._id] || !canUpdateAmounts}
                       className="gold-glow rounded-lg bg-gradient-gold px-4 py-2 text-sm font-semibold text-[hsl(220,20%,7%)] disabled:opacity-50"
                     >
                       {updatingAmounts[slot._id] ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Update'}
@@ -262,7 +398,7 @@ export default function AdminSlots() {
                   <p className="mt-2 text-xs text-white/40">Amounts can be updated before slot start time.</p>
                 </div>
 
-                {slot.status === 'OPEN' && (
+                {canSetWinning && (
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                     <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
                       <Target className="h-4 w-4" />
