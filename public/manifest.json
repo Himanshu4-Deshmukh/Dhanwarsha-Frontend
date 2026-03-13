@@ -1,17 +1,33 @@
 {
+  "id": "/",
   "name": "DhanWarsha - Number Betting",
   "short_name": "DhanWarsha",
   "description": "Place your bets on numbers 0-99",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0f1318",
   "theme_color": "#d4a520",
   "orientation": "portrait",
+  "categories": ["finance", "games", "entertainment"],
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "64x64",
       "type": "image/x-icon"
+    },
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
