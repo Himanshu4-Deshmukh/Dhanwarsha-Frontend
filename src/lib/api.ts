@@ -106,6 +106,14 @@ export const api = {
     }),
   getMyPayments: () => request<any[]>("/payments/my-requests"),
 
+  // Withdrawals
+  createWithdrawal: (amount: number, upiId: string) =>
+    request<any>("/withdrawals", {
+      method: "POST",
+      body: JSON.stringify({ amount, upiId }),
+    }),
+  getMyWithdrawals: () => request<any[]>("/withdrawals/my"),
+
   // Admin
   admin: {
     getAllUsers: (params?: {
@@ -129,6 +137,8 @@ export const api = {
     getUserById: (userId: string) => request<any>(`/users/${userId}`),
     getAllBets: () => request<any[]>("/admin/bets"),
     getAllTransactions: () => request<any[]>("/admin/transactions"),
+
+    // Payments
     getAllPaymentRequests: () => request<any[]>("/admin/payment-requests"),
     approvePayment: (id: string, adminRemark?: string) =>
       request<any>(`/admin/payment-requests/${id}/approve`, {
@@ -165,5 +175,20 @@ export const api = {
       }),
     getSlotProfit: (slotId: string) =>
       request<any>(`/admin/slots/${slotId}/profit`),
+
+    // Withdrawals
+    getAllWithdrawals: () => request<any[]>("/withdrawals/admin/all"),
+    getPendingWithdrawalCount: () =>
+      request<{ withdrawals: number }>("/withdrawals/admin/pending-count"),
+    approveWithdrawal: (id: string, adminRemark?: string) =>
+      request<any>(`/withdrawals/admin/${id}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ adminRemark: adminRemark || "Approved" }),
+      }),
+    rejectWithdrawal: (id: string, adminRemark?: string) =>
+      request<any>(`/withdrawals/admin/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ adminRemark: adminRemark || "Rejected" }),
+      }),
   },
 };
