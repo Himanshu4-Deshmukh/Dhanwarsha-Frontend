@@ -3,9 +3,11 @@ import { api } from '@/lib/api';
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Clock3,
   Coins,
   CreditCard,
   Loader2,
+  MessageSquareText,
   QrCode,
   Smartphone,
   Upload,
@@ -446,25 +448,52 @@ const WalletPage = () => {
               ) : (
                 <div className="space-y-2">
                   {paginatedPayments.map((payment: any, i: number) => (
-                    <div
+                    <motion.div
                       key={payment._id || i}
-                      className="flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      whileHover={{ scale: 1.008, y: -1 }}
+                      className="overflow-hidden rounded-xl border border-white/8 bg-gradient-to-br from-[hsl(220,18%,13%)] via-[hsl(220,18%,11%)] to-[hsl(220,20%,9%)] px-4 py-3 shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-shadow duration-300 hover:shadow-[0_0_0_1px_rgba(245,166,35,0.08),0_12px_26px_rgba(245,166,35,0.05)]"
                     >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white">{payment.amount} coins</p>
-                        <p className="text-xs text-white/30">{new Date(payment.createdAt).toLocaleString()}</p>
-                        {payment.adminRemark && (
-                          <p className="mt-1 text-xs text-white/40">Remark: {payment.adminRemark}</p>
-                        )}
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start gap-2.5">
+                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                              <Coins className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-lg font-bold leading-none text-white sm:text-xl">
+                                {payment.amount} <span className="text-sm font-semibold text-primary/90">coins</span>
+                              </p>
+                              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-white/45">
+                                <Clock3 className="h-3.5 w-3.5 text-white/35" />
+                                <span className="truncate">{new Date(payment.createdAt).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="sm:pl-3">
+                          <span
+                            className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.14em] ${
+                              statusStyles[payment.status] || 'bg-white/5 text-white/40'
+                            }`}
+                          >
+                            {payment.status}
+                          </span>
+                        </div>
                       </div>
-                      <span
-                        className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                          statusStyles[payment.status] || 'bg-white/5 text-white/40'
-                        }`}
-                      >
-                        {payment.status}
-                      </span>
-                    </div>
+
+                      <div className="my-3 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+                      <div className="flex items-start gap-2 text-xs text-white/55">
+                        <MessageSquareText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/35" />
+                        <p className="leading-relaxed">
+                          <span className="mr-1 font-medium text-white/70">Remark:</span>
+                          {payment.adminRemark || 'No remark available'}
+                        </p>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
