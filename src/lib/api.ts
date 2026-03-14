@@ -1,6 +1,6 @@
 const API_BASE =
   import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
-// const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8001/api";
+  // import.meta.env.VITE_API_URL || "http://localhost:8001/api";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
@@ -22,6 +22,19 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   return res.json();
+}
+
+function toQueryString(params: Record<string, string | number | undefined>) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const query = searchParams.toString();
+  return query ? `?${query}` : '';
 }
 
 export const api = {
@@ -103,7 +116,25 @@ export const api = {
 
   // Admin
   admin: {
-    getAllUsers: () => request<any[]>("/admin/users"),
+    getAllUsers: (params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      role?: string;
+      status?: string;
+      email?: string;
+    }) =>
+      request<any>(
+        `/users${toQueryString({
+          page: params?.page,
+          limit: params?.limit,
+          search: params?.search,
+          role: params?.role,
+          status: params?.status,
+          email: params?.email,
+        })}`,
+      ),
+    getUserById: (userId: string) => request<any>(`/users/${userId}`),
     getAllBets: () => request<any[]>("/admin/bets"),
     getAllTransactions: () => request<any[]>("/admin/transactions"),
 
@@ -119,12 +150,28 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ adminRemark: adminRemark || "Rejected" }),
       }),
-
-    // Wallet
-    creditWallet: (userId: string, amount: number) =>
-      request<any>("/admin/credit-wallet", {
+    creditWallet: (userId: string, amount: number, reason?: string) =>
+      request<any>(`/users/${userId}/add-credit`, {
         method: "POST",
-        body: JSON.stringify({ userId, amount }),
+        body: JSON.stringify({ amount, reason }),
+      }),
+    deductWallet: (userId: string, amount: number, reason?: string) =>
+      request<any>(`/users/${userId}/deduct-credit`, {
+        method: "POST",
+        body: JSON.stringify({ amount, reason }),
+      }),
+    updateUserStatus: (userId: string, isActive: boolean) =>
+      request<any>(`/users/${userId}/${isActive ? "unblock" : "block"}`, {
+        method: "PATCH",
+      }),
+    updateUserRole: (userId: string, role: string) =>
+      request<any>(`/users/${userId}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role }),
+      }),
+    deleteUser: (userId: string) =>
+      request<any>(`/users/${userId}`, {
+        method: "DELETE",
       }),
     getSlotProfit: (slotId: string) =>
       request<any>(`/admin/slots/${slotId}/profit`),

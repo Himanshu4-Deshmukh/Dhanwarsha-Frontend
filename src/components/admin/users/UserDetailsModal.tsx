@@ -7,6 +7,7 @@ import type {
   AdminUser,
   SelectedUserDetails,
   UserModalTab,
+  UserRole,
 } from './types';
 
 type UserDetailsModalProps = {
@@ -17,11 +18,17 @@ type UserDetailsModalProps = {
   paymentRequests: AdminPaymentRequest[];
   activeTab: UserModalTab;
   creditAmount: string;
-  crediting: boolean;
+  roleDraft: UserRole;
+  loadingAction?: 'block' | 'role' | 'credit' | 'deduct' | 'delete' | null;
   onClose: () => void;
   onTabChange: (tab: UserModalTab) => void;
   onCreditAmountChange: (value: string) => void;
+  onRoleDraftChange: (value: UserRole) => void;
   onAddCredits: () => void;
+  onDeductCredits: () => void;
+  onToggleBlock: () => void;
+  onChangeRole: () => void;
+  onDeleteAccount: () => void;
 };
 
 const infoCards = [
@@ -39,11 +46,17 @@ export function UserDetailsModal({
   paymentRequests,
   activeTab,
   creditAmount,
-  crediting,
+  roleDraft,
+  loadingAction,
   onClose,
   onTabChange,
   onCreditAmountChange,
+  onRoleDraftChange,
   onAddCredits,
+  onDeductCredits,
+  onToggleBlock,
+  onChangeRole,
+  onDeleteAccount,
 }: UserDetailsModalProps) {
   if (!user || !details) {
     return null;
@@ -253,12 +266,20 @@ export function UserDetailsModal({
 
               <div className="space-y-6">
                 <AdminActions
+                  currentRole={user.role}
+                  currentStatus={user.isActive}
+                  roleDraft={roleDraft}
                   creditAmount={creditAmount}
                   onCreditAmountChange={onCreditAmountChange}
+                  onRoleDraftChange={onRoleDraftChange}
                   onAddCredits={onAddCredits}
+                  onDeductCredits={onDeductCredits}
+                  onToggleBlock={onToggleBlock}
+                  onChangeRole={onChangeRole}
+                  onDeleteAccount={onDeleteAccount}
                   onShowTransactions={() => onTabChange('transactions')}
                   onShowPayments={() => onTabChange('payments')}
-                  crediting={crediting}
+                  loadingAction={loadingAction}
                 />
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
