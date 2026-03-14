@@ -1,42 +1,255 @@
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ChevronDown, Search, ShieldAlert, Users as UsersIcon, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Users as UsersIcon, Search, Loader2, Coins, X, Check } from 'lucide-react';
+import { api } from '@/lib/api';
+import { UserDetailsModal } from '@/components/admin/users/UserDetailsModal';
+import { UserTable } from '@/components/admin/users/UserTable';
+import type {
+  AdminPaymentRequest,
+  AdminTransaction,
+  AdminUser,
+  SelectedUserDetails,
+  UserAnalytics,
+  UserModalTab,
+  UserRoleFilter,
+  UserStatusFilter,
+} from '@/components/admin/users/types';
+
+const USERS_PER_PAGE = 8;
+
+type FilterSelectOption<T extends string> = {
+  label: string;
+  value: T;
+};
+
+type FilterSelectProps<T extends string> = {
+  label: string;
+  value: T;
+  options: FilterSelectOption<T>[];
+  onChange: Dispatch<SetStateAction<T>> | ((value: T) => void);
+};
+
+function FilterSelect<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: FilterSelectProps<T>) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const selected = options.find((option) => option.value === value) || options[0];
+
+  return (
+    <div ref={wrapperRef} className="space-y-2">
+      <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">{label}</label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm text-white transition-all ${
+            open
+              ? 'border-primary/70 bg-[hsl(220,18%,14%)] shadow-[0_0_0_1px_rgba(245,166,35,0.35)]'
+              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]'
+          }`}
+        >
+          <span>{selected.label}</span>
+          <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+
+        {open && (
+          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-2xl border border-white/10 bg-[hsl(220,18%,12%)] p-2 shadow-[0_24px_48px_rgba(0,0,0,0.4)]">
+            {options.map((option) => {
+              const active = option.value === value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    active
+                      ? 'bg-primary/15 text-primary'
+                      : 'text-white/70 hover:bg-white/[0.05] hover:text-white'
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {active && <Check className="h-4 w-4" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const getRelatedUserId = (record: { userId?: string; user?: { _id?: string; id?: string } | string }) => {
+  if (record.userId) return record.userId;
+  if (typeof record.user === 'string') return record.user;
+  return record.user?._id || record.user?.id || '';
+};
+
+const roleOptions: FilterSelectOption<UserRoleFilter>[] = [
+  { label: 'All Roles', value: 'ALL' },
+  { label: 'Admin', value: 'ADMIN' },
+  { label: 'User', value: 'USER' },
+];
+
+const statusOptions: FilterSelectOption<UserStatusFilter>[] = [
+  { label: 'All Statuses', value: 'ALL' },
+  { label: 'Active', value: 'ACTIVE' },
+  { label: 'Blocked', value: 'BLOCKED' },
+];
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
+  const [paymentRequests, setPaymentRequests] = useState<AdminPaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [creditModal, setCreditModal] = useState<{ user: any } | null>(null);
+  const [roleFilter, setRoleFilter] = useState<UserRoleFilter>('ALL');
+  const [statusFilter, setStatusFilter] = useState<UserStatusFilter>('ALL');
+  const [page, setPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [modalTab, setModalTab] = useState<UserModalTab>('overview');
   const [creditAmount, setCreditAmount] = useState('');
   const [crediting, setCrediting] = useState(false);
 
-  useEffect(() => {
-    api.admin.getAllUsers()
-      .then(setUsers)
-      .catch(() => toast.error('Failed to load users'))
-      .finally(() => setLoading(false));
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [nextUsers, nextTransactions, nextPayments] = await Promise.all([
+        api.admin.getAllUsers(),
+        api.admin.getAllTransactions(),
+        api.admin.getAllPaymentRequests(),
+      ]);
+
+      setUsers(nextUsers);
+      setTransactions(nextTransactions);
+      setPaymentRequests(nextPayments);
+    } catch {
+      toast.error('Failed to load admin user data');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filtered = users.filter(u =>
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const analytics = useMemo<UserAnalytics>(() => {
+    const totalCreditsDistributed = transactions.reduce((sum, transaction) => {
+      const isAdminCredit = transaction.type?.toUpperCase().includes('CREDIT');
+      if (isAdminCredit && transaction.amount > 0) {
+        return sum + transaction.amount;
+      }
+      return sum;
+    }, 0);
+
+    return {
+      totalUsers: users.length,
+      activeUsers: users.filter((user) => user.isActive).length,
+      blockedUsers: users.filter((user) => !user.isActive).length,
+      totalCreditsDistributed,
+    };
+  }, [transactions, users]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const matchesSearch =
+        user.name?.toLowerCase().includes(search.toLowerCase()) ||
+        user.email?.toLowerCase().includes(search.toLowerCase());
+      const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
+      const matchesStatus =
+        statusFilter === 'ALL' ||
+        (statusFilter === 'ACTIVE' ? user.isActive : !user.isActive);
+
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [roleFilter, search, statusFilter, users]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, roleFilter, statusFilter, filteredUsers.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+  const paginatedUsers = filteredUsers.slice((page - 1) * USERS_PER_PAGE, page * USERS_PER_PAGE);
+
+  const selectedUser = useMemo(
+    () => users.find((user) => user._id === selectedUserId) || null,
+    [selectedUserId, users],
   );
 
-  const handleCredit = async () => {
-    if (!creditModal) return;
-    const amount = parseInt(creditAmount);
-    if (isNaN(amount) || amount <= 0) {
+  const selectedUserTransactions = useMemo(() => {
+    if (!selectedUserId) return [];
+    return transactions
+      .filter((transaction) => getRelatedUserId(transaction) === selectedUserId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [selectedUserId, transactions]);
+
+  const selectedUserPayments = useMemo(() => {
+    if (!selectedUserId) return [];
+    return paymentRequests
+      .filter((payment) => getRelatedUserId(payment) === selectedUserId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [paymentRequests, selectedUserId]);
+
+  const selectedUserDetails = useMemo<SelectedUserDetails | null>(() => {
+    if (!selectedUser) return null;
+
+    const totalCredits = selectedUserTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+    const lastLoginLabel = selectedUser.lastLogin
+      ? new Date(selectedUser.lastLogin).toLocaleString()
+      : selectedUser.updatedAt
+        ? new Date(selectedUser.updatedAt).toLocaleString()
+        : 'Not available';
+
+    return {
+      totalCredits,
+      totalTransactions: selectedUserTransactions.length,
+      totalPaymentRequests: selectedUserPayments.length,
+      lastLoginLabel,
+    };
+  }, [selectedUser, selectedUserPayments.length, selectedUserTransactions]);
+
+  const openUserModal = (user: AdminUser) => {
+    setSelectedUserId(user._id);
+    setModalTab('overview');
+    setCreditAmount('');
+  };
+
+  const handleCreditUser = async () => {
+    if (!selectedUser) return;
+    const amount = parseInt(creditAmount, 10);
+
+    if (Number.isNaN(amount) || amount <= 0) {
       toast.error('Enter a valid amount');
       return;
     }
+
     setCrediting(true);
     try {
-      await api.admin.creditWallet(creditModal.user._id, amount);
-      toast.success(`Credited ${amount} coins to ${creditModal.user.name}`);
-      setCreditModal(null);
+      await api.admin.creditWallet(selectedUser._id, amount);
+      toast.success(`Credited ${amount} coins to ${selectedUser.name}`);
       setCreditAmount('');
+      await loadData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to credit wallet');
     } finally {
@@ -46,206 +259,108 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white font-display">Users</h1>
-        <p className="mt-1 text-sm text-white/40">Manage all registered users</p>
+      <div className="flex flex-col gap-2">
+        <h1 className="font-display text-2xl font-bold text-white">Users</h1>
+        <p className="text-sm text-white/40">Monitor accounts, wallet activity, and payment request trends.</p>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name or email..."
-          className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-      </div>
-
-      {/* Credit Modal */}
-      <AnimatePresence>
-        {creditModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-            onClick={e => e.target === e.currentTarget && setCreditModal(null)}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: 'Total Users',
+            value: analytics.totalUsers,
+            icon: UsersIcon,
+            color: 'text-white',
+            bg: 'bg-white/[0.03]',
+          },
+          {
+            label: 'Active Users',
+            value: analytics.activeUsers,
+            icon: UsersIcon,
+            color: 'text-green-300',
+            bg: 'bg-green-500/10',
+          },
+          {
+            label: 'Blocked Users',
+            value: analytics.blockedUsers,
+            icon: ShieldAlert,
+            color: 'text-red-300',
+            bg: 'bg-red-500/10',
+          },
+          {
+            label: 'Credits Distributed',
+            value: analytics.totalCreditsDistributed,
+            icon: Wallet,
+            color: 'text-primary',
+            bg: 'bg-primary/10',
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="rounded-3xl border border-white/8 bg-[hsl(220,18%,10%)] p-5 shadow-[0_20px_45px_rgba(0,0,0,0.25)]"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-4 sm:p-6"
-            >
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white font-display">Credit Wallet</h2>
-                <button onClick={() => setCreditModal(null)}><X className="h-5 w-5 text-white/40" /></button>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-white/35">{card.label}</p>
+                <p className="mt-3 text-3xl font-bold text-white">{card.value}</p>
               </div>
-              <div className="mb-4 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
-                  {creditModal.user.name?.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-white">{creditModal.user.name}</p>
-                  <p className="truncate text-xs text-white/40">{creditModal.user.email}</p>
-                </div>
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.bg}`}>
+                <card.icon className={`h-5 w-5 ${card.color}`} />
               </div>
-              <div className="mb-4">
-                <label className="mb-1.5 block text-xs font-medium text-white/50">Amount (coins)</label>
-                <input
-                  type="number"
-                  value={creditAmount}
-                  onChange={e => setCreditAmount(e.target.value)}
-                  placeholder="e.g. 500"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
-                  autoFocus
-                />
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={() => setCreditModal(null)}
-                  className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-white/60 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCredit}
-                  disabled={crediting}
-                  className="flex-1 rounded-lg bg-gradient-gold py-2.5 text-sm font-semibold text-[hsl(220,20%,7%)] gold-glow disabled:opacity-50"
-                >
-                  {crediting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Credit'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Users Table */}
-      {loading ? (
-        <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-white/5">
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-sm">
-              <thead className="border-b border-white/5 bg-white/5">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">User</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Joined</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wide">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-white/30">
-                      <UsersIcon className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                      No users found
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((user, i) => (
-                    <motion.tr
-                      key={user._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.02 }}
-                      className="hover:bg-white/5 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
-                            {user.name?.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium text-white/80">{user.name}</p>
-                            <p className="text-xs text-white/30">{user.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          user.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <div className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-green-400' : 'bg-red-400'}`} />
-                          <span className="text-xs text-white/50">{user.isActive ? 'Active' : 'Inactive'}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-white/40">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => setCreditModal({ user })}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-400 hover:bg-green-500/20 transition-colors"
-                        >
-                          <Coins className="h-3 w-3" /> Credit
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+      <div className="rounded-3xl border border-white/8 bg-[hsl(220,18%,10%)] p-4 shadow-[0_20px_45px_rgba(0,0,0,0.25)] sm:p-5">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">Search Users</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name or email"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
           </div>
-          <div className="divide-y divide-white/5 md:hidden">
-            {filtered.length === 0 ? (
-              <div className="py-10 text-center text-white/30">
-                <UsersIcon className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                No users found
-              </div>
-            ) : (
-              filtered.map((user, i) => (
-                <motion.div
-                  key={user._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="space-y-3 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
-                        {user.name?.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-white/80">{user.name}</p>
-                        <p className="truncate text-xs text-white/30">{user.email}</p>
-                      </div>
-                    </div>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      user.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-white/50">
-                    <span>{user.isActive ? 'Active' : 'Inactive'}</span>
-                    <span>{new Date(user.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <button
-                    onClick={() => setCreditModal({ user })}
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-500/10 px-3 py-2 text-xs font-semibold text-green-400 transition-colors hover:bg-green-500/20"
-                  >
-                    <Coins className="h-3 w-3" /> Credit Wallet
-                  </button>
-                </motion.div>
-              ))
-            )}
-          </div>
+
+          <FilterSelect label="Role Filter" value={roleFilter} options={roleOptions} onChange={setRoleFilter} />
+
+          <FilterSelect label="Status Filter" value={statusFilter} options={statusOptions} onChange={setStatusFilter} />
         </div>
-      )}
+      </div>
+
+      <UserTable
+        users={paginatedUsers}
+        loading={loading}
+        page={page}
+        totalPages={totalPages}
+        onSelectUser={openUserModal}
+        onCreditUser={openUserModal}
+        onPageChange={setPage}
+      />
+
+      <UserDetailsModal
+        open={Boolean(selectedUser)}
+        user={selectedUser}
+        details={selectedUserDetails}
+        transactions={selectedUserTransactions}
+        paymentRequests={selectedUserPayments}
+        activeTab={modalTab}
+        creditAmount={creditAmount}
+        crediting={crediting}
+        onClose={() => {
+          setSelectedUserId(null);
+          setCreditAmount('');
+        }}
+        onTabChange={setModalTab}
+        onCreditAmountChange={setCreditAmount}
+        onAddCredits={handleCreditUser}
+      />
     </div>
   );
 }
