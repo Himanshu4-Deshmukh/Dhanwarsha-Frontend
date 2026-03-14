@@ -77,7 +77,7 @@ export default function AdminUsers() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
+              className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-4 sm:p-6"
             >
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white font-display">Credit Wallet</h2>
@@ -87,9 +87,9 @@ export default function AdminUsers() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
                   {creditModal.user.name?.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{creditModal.user.name}</p>
-                  <p className="text-xs text-white/40">{creditModal.user.email}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{creditModal.user.name}</p>
+                  <p className="truncate text-xs text-white/40">{creditModal.user.email}</p>
                 </div>
               </div>
               <div className="mb-4">
@@ -103,7 +103,7 @@ export default function AdminUsers() {
                   autoFocus
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setCreditModal(null)}
                   className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-white/60 hover:text-white"
@@ -129,8 +129,8 @@ export default function AdminUsers() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="rounded-xl border border-white/5 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="overflow-hidden rounded-xl border border-white/5">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/5 bg-white/5">
                 <tr>
@@ -198,6 +198,51 @@ export default function AdminUsers() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="divide-y divide-white/5 md:hidden">
+            {filtered.length === 0 ? (
+              <div className="py-10 text-center text-white/30">
+                <UsersIcon className="mx-auto mb-2 h-8 w-8 opacity-30" />
+                No users found
+              </div>
+            ) : (
+              filtered.map((user, i) => (
+                <motion.div
+                  key={user._id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="space-y-3 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                        {user.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-white/80">{user.name}</p>
+                        <p className="truncate text-xs text-white/30">{user.email}</p>
+                      </div>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      user.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <span>{user.isActive ? 'Active' : 'Inactive'}</span>
+                    <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <button
+                    onClick={() => setCreditModal({ user })}
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-500/10 px-3 py-2 text-xs font-semibold text-green-400 transition-colors hover:bg-green-500/20"
+                  >
+                    <Coins className="h-3 w-3" /> Credit Wallet
+                  </button>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       )}

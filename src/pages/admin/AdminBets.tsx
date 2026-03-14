@@ -63,7 +63,7 @@ export default function AdminBets() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 lg:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
           <input
@@ -74,7 +74,7 @@ export default function AdminBets() {
             className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['ALL', 'PENDING', 'WON', 'LOST'].map(f => (
             <button
               key={f}
@@ -97,8 +97,8 @@ export default function AdminBets() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="rounded-xl border border-white/5 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="overflow-hidden rounded-xl border border-white/5">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/5 bg-white/5">
                 <tr>
@@ -165,6 +165,60 @@ export default function AdminBets() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="divide-y divide-white/5 md:hidden">
+            {filtered.length === 0 ? (
+              <div className="py-10 text-center text-white/30">
+                <TrendingUp className="mx-auto mb-2 h-8 w-8 opacity-30" />
+                No bets found
+              </div>
+            ) : (
+              filtered.map((bet, i) => {
+                const sc = STATUS_COLORS[bet.status] || { bg: 'bg-white/5', text: 'text-white/40' };
+                return (
+                  <motion.div
+                    key={bet._id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.01 }}
+                    className="space-y-3 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                          {bet.userId?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-white/80">{bet.userId?.name || 'User'}</p>
+                          <p className="truncate text-xs text-white/30">{bet.userId?.email || 'No email'}</p>
+                        </div>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${sc.bg} ${sc.text}`}>
+                        {bet.status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="rounded-lg bg-white/5 p-3">
+                        <p className="text-white/30">Number</p>
+                        <p className="mt-1 text-lg font-bold text-primary">{bet.number}</p>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-3">
+                        <p className="text-white/30">Amount</p>
+                        <p className="mt-1 text-lg font-bold text-white/80">{bet.amount} <span className="text-xs font-normal text-white/30">coins</span></p>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-3">
+                        <p className="text-white/30">Slot</p>
+                        <p className="mt-1 text-sm text-white/70">{bet.slotId?._id?.slice(-6) || bet.slotId?.slice(-6) || '--'}</p>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-3">
+                        <p className="text-white/30">Time</p>
+                        <p className="mt-1 text-sm text-white/70">{new Date(bet.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
           <div className="border-t border-white/5 px-4 py-2.5 text-right text-xs text-white/30">
             Showing {filtered.length} of {bets.length} bets

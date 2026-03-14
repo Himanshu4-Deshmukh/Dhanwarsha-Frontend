@@ -37,7 +37,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[hsl(220,20%,5%)]">
+    <div className="flex min-h-screen w-full bg-[hsl(220,20%,5%)]">
       {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -141,21 +141,25 @@ export default function AdminLayout() {
       {/* Main */}
       <div className="flex flex-1 flex-col lg:pl-64">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-white/5 bg-[hsl(220,20%,8%)]/80 px-4 py-3 backdrop-blur-md lg:px-6">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-white/5 bg-[hsl(220,20%,8%)]/80 px-3 py-3 backdrop-blur-md sm:px-4 lg:px-6">
           <button
             onClick={() => setSidebarOpen(true)}
             className="rounded-md p-2 text-white/50 hover:bg-white/5 hover:text-white lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white sm:hidden">Admin Panel</p>
+            <p className="hidden text-sm font-semibold text-white/80 sm:block">DhanWarsha Admin</p>
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
             <Coins className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold text-white/60">Admin</span>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-3 sm:p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
