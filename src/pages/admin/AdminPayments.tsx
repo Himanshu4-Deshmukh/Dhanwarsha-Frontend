@@ -1,22 +1,34 @@
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Loader2, CheckCircle, XCircle, Eye, X, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  CreditCard,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Eye,
+  X,
+  ExternalLink,
+} from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
-const API_ORIGIN = API_BASE.replace(/\/api\/?$/, '');
+// const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
+const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 
 const resolveScreenshotUrl = (url?: string) => {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `${API_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${API_ORIGIN}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [filter, setFilter] = useState<
+    "ALL" | "PENDING" | "APPROVED" | "REJECTED"
+  >("ALL");
   const [viewPayment, setViewPayment] = useState<any | null>(null);
   const [remarkInputs, setRemarkInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
@@ -26,73 +38,81 @@ export default function AdminPayments() {
       const data = await api.admin.getAllPaymentRequests();
       setPayments(data);
     } catch {
-      toast.error('Failed to load payments');
+      toast.error("Failed to load payments");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchPayments(); }, []);
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
-  const filtered = payments.filter(p => filter === 'ALL' || p.status === filter);
+  const filtered = payments.filter(
+    (p) => filter === "ALL" || p.status === filter,
+  );
 
   const handleApprove = async (id: string) => {
-    setSubmitting(prev => ({ ...prev, [id]: true }));
+    setSubmitting((prev) => ({ ...prev, [id]: true }));
     try {
-      await api.admin.approvePayment(id, remarkInputs[id] || 'Approved');
-      toast.success('Payment approved!');
+      await api.admin.approvePayment(id, remarkInputs[id] || "Approved");
+      toast.success("Payment approved!");
       fetchPayments();
       setViewPayment(null);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to approve');
+      toast.error(err.message || "Failed to approve");
     } finally {
-      setSubmitting(prev => ({ ...prev, [id]: false }));
+      setSubmitting((prev) => ({ ...prev, [id]: false }));
     }
   };
 
   const handleReject = async (id: string) => {
-    setSubmitting(prev => ({ ...prev, [`${id}_r`]: true }));
+    setSubmitting((prev) => ({ ...prev, [`${id}_r`]: true }));
     try {
-      await api.admin.rejectPayment(id, remarkInputs[id] || 'Rejected');
-      toast.success('Payment rejected');
+      await api.admin.rejectPayment(id, remarkInputs[id] || "Rejected");
+      toast.success("Payment rejected");
       fetchPayments();
       setViewPayment(null);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to reject');
+      toast.error(err.message || "Failed to reject");
     } finally {
-      setSubmitting(prev => ({ ...prev, [`${id}_r`]: false }));
+      setSubmitting((prev) => ({ ...prev, [`${id}_r`]: false }));
     }
   };
 
   const statusConfig: Record<string, { bg: string; text: string }> = {
-    PENDING: { bg: 'bg-yellow-500/10', text: 'text-yellow-400' },
-    APPROVED: { bg: 'bg-green-500/10', text: 'text-green-400' },
-    REJECTED: { bg: 'bg-red-500/10', text: 'text-red-400' },
+    PENDING: { bg: "bg-yellow-500/10", text: "text-yellow-400" },
+    APPROVED: { bg: "bg-green-500/10", text: "text-green-400" },
+    REJECTED: { bg: "bg-red-500/10", text: "text-red-400" },
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white font-display">Payment Requests</h1>
-        <p className="mt-1 text-sm text-white/40">Review and manage user deposit requests</p>
+        <h1 className="text-2xl font-bold text-white font-display">
+          Payment Requests
+        </h1>
+        <p className="mt-1 text-sm text-white/40">
+          Review and manage user deposit requests
+        </p>
       </div>
 
       {/* Filter Tabs */}
       <div className="flex gap-2">
-        {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map(f => (
+        {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
               filter === f
-                ? 'bg-primary text-[hsl(220,20%,7%)]'
-                : 'border border-white/10 bg-white/5 text-white/50 hover:text-white'
+                ? "bg-primary text-[hsl(220,20%,7%)]"
+                : "border border-white/10 bg-white/5 text-white/50 hover:text-white"
             }`}
           >
             {f}
-            {f !== 'ALL' && (
+            {f !== "ALL" && (
               <span className="ml-1.5 rounded-full bg-white/10 px-1.5 text-xs">
-                {payments.filter(p => p.status === f).length}
+                {payments.filter((p) => p.status === f).length}
               </span>
             )}
           </button>
@@ -107,7 +127,9 @@ export default function AdminPayments() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-            onClick={e => e.target === e.currentTarget && setViewPayment(null)}
+            onClick={(e) =>
+              e.target === e.currentTarget && setViewPayment(null)
+            }
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -116,21 +138,31 @@ export default function AdminPayments() {
               className="w-full max-w-md rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
             >
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white font-display">Payment Request</h2>
-                <button onClick={() => setViewPayment(null)}><X className="h-5 w-5 text-white/40" /></button>
+                <h2 className="text-lg font-bold text-white font-display">
+                  Payment Request
+                </h2>
+                <button onClick={() => setViewPayment(null)}>
+                  <X className="h-5 w-5 text-white/40" />
+                </button>
               </div>
 
               {/* User info */}
               <div className="mb-4 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
-                  {viewPayment.userId?.name?.charAt(0).toUpperCase() || 'U'}
+                  {viewPayment.userId?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{viewPayment.userId?.name || 'User'}</p>
-                  <p className="text-xs text-white/40">{viewPayment.userId?.email}</p>
+                  <p className="text-sm font-semibold text-white">
+                    {viewPayment.userId?.name || "User"}
+                  </p>
+                  <p className="text-xs text-white/40">
+                    {viewPayment.userId?.email}
+                  </p>
                 </div>
                 <div className="ml-auto">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusConfig[viewPayment.status]?.bg} ${statusConfig[viewPayment.status]?.text}`}>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusConfig[viewPayment.status]?.bg} ${statusConfig[viewPayment.status]?.text}`}
+                  >
                     {viewPayment.status}
                   </span>
                 </div>
@@ -139,20 +171,28 @@ export default function AdminPayments() {
               <div className="mb-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-white/5 p-3">
                   <p className="text-xs text-white/40 mb-1">Amount</p>
-                  <p className="text-xl font-bold text-primary font-display">{viewPayment.amount}</p>
+                  <p className="text-xl font-bold text-primary font-display">
+                    {viewPayment.amount}
+                  </p>
                   <p className="text-xs text-white/30">coins</p>
                 </div>
                 <div className="rounded-lg bg-white/5 p-3">
                   <p className="text-xs text-white/40 mb-1">Date</p>
-                  <p className="text-sm font-medium text-white">{new Date(viewPayment.createdAt).toLocaleDateString()}</p>
-                  <p className="text-xs text-white/30">{new Date(viewPayment.createdAt).toLocaleTimeString()}</p>
+                  <p className="text-sm font-medium text-white">
+                    {new Date(viewPayment.createdAt).toLocaleDateString()}
+                  </p>
+                  <p className="text-xs text-white/30">
+                    {new Date(viewPayment.createdAt).toLocaleTimeString()}
+                  </p>
                 </div>
               </div>
 
               {/* Screenshot */}
               {viewPayment.screenshotUrl && (
                 <div className="mb-4">
-                  <p className="mb-2 text-xs font-medium text-white/50">Payment Screenshot</p>
+                  <p className="mb-2 text-xs font-medium text-white/50">
+                    Payment Screenshot
+                  </p>
                   <img
                     src={resolveScreenshotUrl(viewPayment.screenshotUrl)}
                     alt="Payment proof"
@@ -170,14 +210,21 @@ export default function AdminPayments() {
                 </div>
               )}
 
-              {viewPayment.status === 'PENDING' && (
+              {viewPayment.status === "PENDING" && (
                 <>
                   <div className="mb-3">
-                    <label className="mb-1.5 block text-xs font-medium text-white/50">Remark (optional)</label>
+                    <label className="mb-1.5 block text-xs font-medium text-white/50">
+                      Remark (optional)
+                    </label>
                     <input
                       type="text"
-                      value={remarkInputs[viewPayment._id] || ''}
-                      onChange={e => setRemarkInputs(prev => ({ ...prev, [viewPayment._id]: e.target.value }))}
+                      value={remarkInputs[viewPayment._id] || ""}
+                      onChange={(e) =>
+                        setRemarkInputs((prev) => ({
+                          ...prev,
+                          [viewPayment._id]: e.target.value,
+                        }))
+                      }
                       placeholder="Add a remark..."
                       className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
                     />
@@ -188,14 +235,26 @@ export default function AdminPayments() {
                       disabled={submitting[`${viewPayment._id}_r`]}
                       className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
                     >
-                      {submitting[`${viewPayment._id}_r`] ? <Loader2 className="h-4 w-4 animate-spin" /> : <><XCircle className="h-4 w-4" /> Reject</>}
+                      {submitting[`${viewPayment._id}_r`] ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4" /> Reject
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={() => handleApprove(viewPayment._id)}
                       disabled={submitting[viewPayment._id]}
                       className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-green-500/10 py-2.5 text-sm font-semibold text-green-400 hover:bg-green-500/20 transition-colors disabled:opacity-50"
                     >
-                      {submitting[viewPayment._id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="h-4 w-4" /> Approve</>}
+                      {submitting[viewPayment._id] ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4" /> Approve
+                        </>
+                      )}
                     </button>
                   </div>
                 </>
@@ -216,11 +275,21 @@ export default function AdminPayments() {
             <table className="w-full text-sm">
               <thead className="border-b border-white/5 bg-white/5">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">User</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">Date</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wide">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">
+                    User
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wide">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -233,7 +302,10 @@ export default function AdminPayments() {
                   </tr>
                 ) : (
                   filtered.map((pay, i) => {
-                    const sc = statusConfig[pay.status] || { bg: 'bg-white/5', text: 'text-white/40' };
+                    const sc = statusConfig[pay.status] || {
+                      bg: "bg-white/5",
+                      text: "text-white/40",
+                    };
                     return (
                       <motion.tr
                         key={pay._id}
@@ -245,20 +317,30 @@ export default function AdminPayments() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
-                              {pay.userId?.name?.charAt(0).toUpperCase() || 'U'}
+                              {pay.userId?.name?.charAt(0).toUpperCase() || "U"}
                             </div>
                             <div>
-                              <p className="font-medium text-white/80">{pay.userId?.name || 'User'}</p>
-                              <p className="text-xs text-white/30">{pay.userId?.email}</p>
+                              <p className="font-medium text-white/80">
+                                {pay.userId?.name || "User"}
+                              </p>
+                              <p className="text-xs text-white/30">
+                                {pay.userId?.email}
+                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="font-bold text-primary">{pay.amount}</span>
-                          <span className="ml-1 text-xs text-white/30">coins</span>
+                          <span className="font-bold text-primary">
+                            {pay.amount}
+                          </span>
+                          <span className="ml-1 text-xs text-white/30">
+                            coins
+                          </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${sc.bg} ${sc.text}`}>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${sc.bg} ${sc.text}`}
+                          >
                             {pay.status}
                           </span>
                         </td>
@@ -273,7 +355,7 @@ export default function AdminPayments() {
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </button>
-                            {pay.status === 'PENDING' && (
+                            {pay.status === "PENDING" && (
                               <>
                                 <button
                                   onClick={() => handleReject(pay._id)}
