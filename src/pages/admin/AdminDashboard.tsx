@@ -17,7 +17,7 @@ export default function AdminDashboard() {
     const load = async () => {
       try {
         const [users, bets, payments, txns] = await Promise.all([
-          api.admin.getAllUsers(),
+          api.admin.getAllUsers({ page: 1, limit: 1 }),
           api.admin.getAllBets(),
           api.admin.getAllPaymentRequests(),
           api.admin.getAllTransactions(),
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         const totalPayout = wonBets.length * 95;
 
         setStats({
-          users: users.length,
+          users: users.meta.total,
           totalBets: bets.length,
           pendingPayments: payments.filter((p: any) => p.status === 'PENDING').length,
           profit: totalBetAmount - totalPayout,

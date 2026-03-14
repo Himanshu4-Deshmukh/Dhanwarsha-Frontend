@@ -9,9 +9,22 @@ export interface AdminUser {
   email: string;
   role: UserRole;
   isActive: boolean;
+  status?: 'ACTIVE' | 'BLOCKED' | string;
+  credits?: number;
+  joinedDate?: string | null;
   createdAt: string;
   updatedAt?: string;
   lastLogin?: string | null;
+}
+
+export interface AdminUsersListResponse {
+  data: AdminUser[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface AdminTransaction {
@@ -31,6 +44,14 @@ export interface AdminPaymentRequest {
   status: string;
   createdAt: string;
   adminRemark?: string;
+}
+
+export interface AdminUserProfile extends AdminUser {
+  credits: number;
+  joinedDate?: string | null;
+  status?: 'ACTIVE' | 'BLOCKED' | string;
+  transactions: AdminTransaction[];
+  paymentRequests: AdminPaymentRequest[];
 }
 
 export interface UserAnalytics {

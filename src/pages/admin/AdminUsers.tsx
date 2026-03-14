@@ -1,16 +1,26 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Check, ChevronDown, Search, ShieldAlert, Users as UsersIcon, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { UserDetailsModal } from '@/components/admin/users/UserDetailsModal';
 import { UserTable } from '@/components/admin/users/UserTable';
 import type {
-  AdminPaymentRequest,
-  AdminTransaction,
   AdminUser,
+  AdminUserProfile,
+  AdminUsersListResponse,
   SelectedUserDetails,
   UserAnalytics,
   UserModalTab,
+  UserRole,
   UserRoleFilter,
   UserStatusFilter,
 } from '@/components/admin/users/types';
@@ -99,12 +109,6 @@ function FilterSelect<T extends string>({
   );
 }
 
-const getRelatedUserId = (record: { userId?: string; user?: { _id?: string; id?: string } | string }) => {
-  if (record.userId) return record.userId;
-  if (typeof record.user === 'string') return record.user;
-  return record.user?._id || record.user?.id || '';
-};
-
 const roleOptions: FilterSelectOption<UserRoleFilter>[] = [
   { label: 'All Roles', value: 'ALL' },
   { label: 'Admin', value: 'ADMIN' },
@@ -117,126 +121,127 @@ const statusOptions: FilterSelectOption<UserStatusFilter>[] = [
   { label: 'Blocked', value: 'BLOCKED' },
 ];
 
+const emptyUsersMeta: AdminUsersListResponse['meta'] = {
+  page: 1,
+  limit: USERS_PER_PAGE,
+  total: 0,
+  totalPages: 1,
+};
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
-  const [paymentRequests, setPaymentRequests] = useState<AdminPaymentRequest[]>([]);
+  const [usersMeta, setUsersMeta] = useState<AdminUsersListResponse['meta']>(emptyUsersMeta);
+  const [analytics, setAnalytics] = useState<UserAnalytics>({
+    totalUsers: 0,
+    activeUsers: 0,
+    blockedUsers: 0,
+    totalCreditsDistributed: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search.trim());
   const [roleFilter, setRoleFilter] = useState<UserRoleFilter>('ALL');
   const [statusFilter, setStatusFilter] = useState<UserStatusFilter>('ALL');
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<AdminUserProfile | null>(null);
   const [modalTab, setModalTab] = useState<UserModalTab>('overview');
   const [creditAmount, setCreditAmount] = useState('');
-  const [crediting, setCrediting] = useState(false);
+  const [roleDraft, setRoleDraft] = useState<UserRole>('USER');
+  const [loadingAction, setLoadingAction] = useState<
+    'block' | 'role' | 'credit' | 'deduct' | 'delete' | null
+  >(null);
+
+  useEffect(() => {
+    setPage(1);
+  }, [deferredSearch, roleFilter, statusFilter]);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [nextUsers, nextTransactions, nextPayments] = await Promise.all([
-        api.admin.getAllUsers(),
+      const filters = {
+        page,
+        limit: USERS_PER_PAGE,
+        search: deferredSearch || undefined,
+        role: roleFilter === 'ALL' ? undefined : roleFilter,
+        status: statusFilter === 'ALL' ? undefined : statusFilter,
+      };
+
+      const [usersResponse, allUsersResponse, activeUsersResponse, blockedUsersResponse, transactions] = await Promise.all([
+        api.admin.getAllUsers(filters),
+        api.admin.getAllUsers({ page: 1, limit: 1 }),
+        api.admin.getAllUsers({ page: 1, limit: 1, status: 'ACTIVE' }),
+        api.admin.getAllUsers({ page: 1, limit: 1, status: 'BLOCKED' }),
         api.admin.getAllTransactions(),
-        api.admin.getAllPaymentRequests(),
       ]);
 
-      setUsers(nextUsers);
-      setTransactions(nextTransactions);
-      setPaymentRequests(nextPayments);
+      setUsers(usersResponse.data);
+      setUsersMeta(usersResponse.meta);
+      setAnalytics({
+        totalUsers: allUsersResponse.meta.total,
+        activeUsers: activeUsersResponse.meta.total,
+        blockedUsers: blockedUsersResponse.meta.total,
+        totalCreditsDistributed: transactions.reduce((sum: number, transaction: { type?: string; amount: number }) => {
+          const isAdminCredit = transaction.type?.toUpperCase().includes('CREDIT');
+          return isAdminCredit && transaction.amount > 0 ? sum + transaction.amount : sum;
+        }, 0),
+      });
     } catch {
       toast.error('Failed to load admin user data');
     } finally {
       setLoading(false);
     }
+  }, [deferredSearch, page, roleFilter, statusFilter]);
+
+  const refreshSelectedUser = useCallback(async (userId: string) => {
+    const profile = await api.admin.getUserById(userId);
+    setSelectedUserProfile(profile);
+    setRoleDraft(profile.role);
   }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const analytics = useMemo<UserAnalytics>(() => {
-    const totalCreditsDistributed = transactions.reduce((sum, transaction) => {
-      const isAdminCredit = transaction.type?.toUpperCase().includes('CREDIT');
-      if (isAdminCredit && transaction.amount > 0) {
-        return sum + transaction.amount;
-      }
-      return sum;
-    }, 0);
+  const selectedUser = selectedUserProfile;
 
-    return {
-      totalUsers: users.length,
-      activeUsers: users.filter((user) => user.isActive).length,
-      blockedUsers: users.filter((user) => !user.isActive).length,
-      totalCreditsDistributed,
-    };
-  }, [transactions, users]);
-
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesSearch =
-        user.name?.toLowerCase().includes(search.toLowerCase()) ||
-        user.email?.toLowerCase().includes(search.toLowerCase());
-      const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
-      const matchesStatus =
-        statusFilter === 'ALL' ||
-        (statusFilter === 'ACTIVE' ? user.isActive : !user.isActive);
-
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [roleFilter, search, statusFilter, users]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search, roleFilter, statusFilter, filteredUsers.length]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
-  const paginatedUsers = filteredUsers.slice((page - 1) * USERS_PER_PAGE, page * USERS_PER_PAGE);
-
-  const selectedUser = useMemo(
-    () => users.find((user) => user._id === selectedUserId) || null,
-    [selectedUserId, users],
-  );
-
-  const selectedUserTransactions = useMemo(() => {
-    if (!selectedUserId) return [];
-    return transactions
-      .filter((transaction) => getRelatedUserId(transaction) === selectedUserId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [selectedUserId, transactions]);
-
-  const selectedUserPayments = useMemo(() => {
-    if (!selectedUserId) return [];
-    return paymentRequests
-      .filter((payment) => getRelatedUserId(payment) === selectedUserId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [paymentRequests, selectedUserId]);
+  const selectedUserTransactions = selectedUserProfile?.transactions ?? [];
+  const selectedUserPayments = selectedUserProfile?.paymentRequests ?? [];
 
   const selectedUserDetails = useMemo<SelectedUserDetails | null>(() => {
-    if (!selectedUser) return null;
+    if (!selectedUserProfile) return null;
 
-    const totalCredits = selectedUserTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-    const lastLoginLabel = selectedUser.lastLogin
-      ? new Date(selectedUser.lastLogin).toLocaleString()
-      : selectedUser.updatedAt
-        ? new Date(selectedUser.updatedAt).toLocaleString()
+    const lastLoginLabel = selectedUserProfile.lastLogin
+      ? new Date(selectedUserProfile.lastLogin).toLocaleString()
+      : selectedUserProfile.updatedAt
+        ? new Date(selectedUserProfile.updatedAt).toLocaleString()
         : 'Not available';
 
     return {
-      totalCredits,
+      totalCredits: selectedUserProfile.credits ?? 0,
       totalTransactions: selectedUserTransactions.length,
       totalPaymentRequests: selectedUserPayments.length,
       lastLoginLabel,
     };
-  }, [selectedUser, selectedUserPayments.length, selectedUserTransactions]);
+  }, [selectedUserPayments.length, selectedUserProfile, selectedUserTransactions.length]);
 
-  const openUserModal = (user: AdminUser) => {
+  const openUserModal = async (user: AdminUser) => {
     setSelectedUserId(user._id);
+    setSelectedUserProfile(null);
     setModalTab('overview');
     setCreditAmount('');
+    setRoleDraft(user.role);
+
+    try {
+      await refreshSelectedUser(user._id);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load user details');
+      setSelectedUserId(null);
+    }
   };
 
   const handleCreditUser = async () => {
-    if (!selectedUser) return;
+    if (!selectedUserId || !selectedUser) return;
     const amount = parseInt(creditAmount, 10);
 
     if (Number.isNaN(amount) || amount <= 0) {
@@ -244,16 +249,94 @@ export default function AdminUsers() {
       return;
     }
 
-    setCrediting(true);
+    setLoadingAction('credit');
     try {
-      await api.admin.creditWallet(selectedUser._id, amount);
+      await api.admin.creditWallet(selectedUserId, amount);
       toast.success(`Credited ${amount} coins to ${selectedUser.name}`);
       setCreditAmount('');
-      await loadData();
+      await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
     } catch (err: any) {
       toast.error(err.message || 'Failed to credit wallet');
     } finally {
-      setCrediting(false);
+      setLoadingAction(null);
+    }
+  };
+
+  const handleDeductCredits = async () => {
+    if (!selectedUserId || !selectedUser) return;
+    const amount = parseInt(creditAmount, 10);
+
+    if (Number.isNaN(amount) || amount <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+
+    setLoadingAction('deduct');
+    try {
+      await api.admin.deductWallet(selectedUserId, amount);
+      toast.success(`Deducted ${amount} coins from ${selectedUser.name}`);
+      setCreditAmount('');
+      await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to deduct wallet');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleToggleBlock = async () => {
+    if (!selectedUserId || !selectedUser) return;
+
+    setLoadingAction('block');
+    try {
+      await api.admin.updateUserStatus(selectedUserId, !selectedUser.isActive);
+      toast.success(`${selectedUser.name} has been ${selectedUser.isActive ? 'blocked' : 'unblocked'}`);
+      await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update user status');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleChangeRole = async () => {
+    if (!selectedUserId || !selectedUser) return;
+
+    if (roleDraft === selectedUser.role) {
+      toast.error('Select a different role');
+      return;
+    }
+
+    setLoadingAction('role');
+    try {
+      await api.admin.updateUserRole(selectedUserId, roleDraft);
+      toast.success(`${selectedUser.name} is now ${roleDraft}`);
+      await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update user role');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!selectedUserId || !selectedUser) return;
+
+    const confirmed = window.confirm(`Delete ${selectedUser.name}'s account? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    setLoadingAction('delete');
+    try {
+      await api.admin.deleteUser(selectedUserId);
+      toast.success(`${selectedUser.name}'s account was deleted`);
+      setSelectedUserId(null);
+      setSelectedUserProfile(null);
+      setCreditAmount('');
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete user account');
+    } finally {
+      setLoadingAction(null);
     }
   };
 
@@ -335,31 +418,39 @@ export default function AdminUsers() {
       </div>
 
       <UserTable
-        users={paginatedUsers}
+        users={users}
         loading={loading}
-        page={page}
-        totalPages={totalPages}
+        page={usersMeta.page}
+        totalPages={usersMeta.totalPages}
         onSelectUser={openUserModal}
         onCreditUser={openUserModal}
         onPageChange={setPage}
       />
 
       <UserDetailsModal
-        open={Boolean(selectedUser)}
+        open={Boolean(selectedUserId && selectedUserProfile)}
         user={selectedUser}
         details={selectedUserDetails}
         transactions={selectedUserTransactions}
         paymentRequests={selectedUserPayments}
         activeTab={modalTab}
         creditAmount={creditAmount}
-        crediting={crediting}
+        roleDraft={roleDraft}
+        loadingAction={loadingAction}
         onClose={() => {
           setSelectedUserId(null);
+          setSelectedUserProfile(null);
           setCreditAmount('');
+          setLoadingAction(null);
         }}
         onTabChange={setModalTab}
         onCreditAmountChange={setCreditAmount}
+        onRoleDraftChange={setRoleDraft}
         onAddCredits={handleCreditUser}
+        onDeductCredits={handleDeductCredits}
+        onToggleBlock={handleToggleBlock}
+        onChangeRole={handleChangeRole}
+        onDeleteAccount={handleDeleteAccount}
       />
     </div>
   );
