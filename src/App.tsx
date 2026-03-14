@@ -17,6 +17,7 @@ import AdminPastSlots from "./pages/admin/AdminPastSlots";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminBets from "./pages/admin/AdminBets";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="users" element={<AdminUsers />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="bets" element={<AdminBets />} />
+              <Route path="withdrawals" element={<AdminWithdrawals />} />
             </Route>
             <Route path="/*" element={<AppLayout />} />
           </Routes>
