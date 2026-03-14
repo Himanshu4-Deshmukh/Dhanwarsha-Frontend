@@ -7,12 +7,19 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
-import { Check, ChevronDown, Search, ShieldAlert, Users as UsersIcon, Wallet } from 'lucide-react';
-import { toast } from 'sonner';
-import { api } from '@/lib/api';
-import { UserDetailsModal } from '@/components/admin/users/UserDetailsModal';
-import { UserTable } from '@/components/admin/users/UserTable';
+} from "react";
+import {
+  Check,
+  ChevronDown,
+  Search,
+  ShieldAlert,
+  Users as UsersIcon,
+  Wallet,
+} from "lucide-react";
+import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { UserDetailsModal } from "@/components/admin/users/UserDetailsModal";
+import { UserTable } from "@/components/admin/users/UserTable";
 import type {
   AdminUser,
   AdminUserProfile,
@@ -23,7 +30,7 @@ import type {
   UserRole,
   UserRoleFilter,
   UserStatusFilter,
-} from '@/components/admin/users/types';
+} from "@/components/admin/users/types";
 
 const USERS_PER_PAGE = 8;
 
@@ -55,27 +62,32 @@ function FilterSelect<T extends string>({
       }
     };
 
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  const selected = options.find((option) => option.value === value) || options[0];
+  const selected =
+    options.find((option) => option.value === value) || options[0];
 
   return (
     <div ref={wrapperRef} className="space-y-2">
-      <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">{label}</label>
+      <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">
+        {label}
+      </label>
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
           className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm text-white transition-all ${
             open
-              ? 'border-primary/70 bg-[hsl(220,18%,14%)] shadow-[0_0_0_1px_rgba(245,166,35,0.35)]'
-              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]'
+              ? "border-primary/70 bg-[hsl(220,18%,14%)] shadow-[0_0_0_1px_rgba(245,166,35,0.35)]"
+              : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
           }`}
         >
           <span>{selected.label}</span>
-          <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`h-4 w-4 text-white/40 transition-transform ${open ? "rotate-180" : ""}`}
+          />
         </button>
 
         {open && (
@@ -93,8 +105,8 @@ function FilterSelect<T extends string>({
                   }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? 'bg-primary/15 text-primary'
-                      : 'text-white/70 hover:bg-white/[0.05] hover:text-white'
+                      ? "bg-primary/15 text-primary"
+                      : "text-white/70 hover:bg-white/[0.05] hover:text-white"
                   }`}
                 >
                   <span>{option.label}</span>
@@ -110,18 +122,18 @@ function FilterSelect<T extends string>({
 }
 
 const roleOptions: FilterSelectOption<UserRoleFilter>[] = [
-  { label: 'All Roles', value: 'ALL' },
-  { label: 'Admin', value: 'ADMIN' },
-  { label: 'User', value: 'USER' },
+  { label: "All Roles", value: "ALL" },
+  { label: "Admin", value: "ADMIN" },
+  { label: "User", value: "USER" },
 ];
 
 const statusOptions: FilterSelectOption<UserStatusFilter>[] = [
-  { label: 'All Statuses', value: 'ALL' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Blocked', value: 'BLOCKED' },
+  { label: "All Statuses", value: "ALL" },
+  { label: "Active", value: "ACTIVE" },
+  { label: "Blocked", value: "BLOCKED" },
 ];
 
-const emptyUsersMeta: AdminUsersListResponse['meta'] = {
+const emptyUsersMeta: AdminUsersListResponse["meta"] = {
   page: 1,
   limit: USERS_PER_PAGE,
   total: 0,
@@ -130,7 +142,8 @@ const emptyUsersMeta: AdminUsersListResponse['meta'] = {
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [usersMeta, setUsersMeta] = useState<AdminUsersListResponse['meta']>(emptyUsersMeta);
+  const [usersMeta, setUsersMeta] =
+    useState<AdminUsersListResponse["meta"]>(emptyUsersMeta);
   const [analytics, setAnalytics] = useState<UserAnalytics>({
     totalUsers: 0,
     activeUsers: 0,
@@ -138,18 +151,19 @@ export default function AdminUsers() {
     totalCreditsDistributed: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search.trim());
-  const [roleFilter, setRoleFilter] = useState<UserRoleFilter>('ALL');
-  const [statusFilter, setStatusFilter] = useState<UserStatusFilter>('ALL');
+  const [roleFilter, setRoleFilter] = useState<UserRoleFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<UserStatusFilter>("ALL");
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedUserProfile, setSelectedUserProfile] = useState<AdminUserProfile | null>(null);
-  const [modalTab, setModalTab] = useState<UserModalTab>('overview');
-  const [creditAmount, setCreditAmount] = useState('');
-  const [roleDraft, setRoleDraft] = useState<UserRole>('USER');
+  const [selectedUserProfile, setSelectedUserProfile] =
+    useState<AdminUserProfile | null>(null);
+  const [modalTab, setModalTab] = useState<UserModalTab>("overview");
+  const [creditAmount, setCreditAmount] = useState("");
+  const [roleDraft, setRoleDraft] = useState<UserRole>("USER");
   const [loadingAction, setLoadingAction] = useState<
-    'block' | 'role' | 'credit' | 'deduct' | 'delete' | null
+    "block" | "role" | "credit" | "deduct" | "delete" | null
   >(null);
 
   useEffect(() => {
@@ -159,35 +173,58 @@ export default function AdminUsers() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const filters = {
-        page,
-        limit: USERS_PER_PAGE,
-        search: deferredSearch || undefined,
-        role: roleFilter === 'ALL' ? undefined : roleFilter,
-        status: statusFilter === 'ALL' ? undefined : statusFilter,
-      };
-
-      const [usersResponse, allUsersResponse, activeUsersResponse, blockedUsersResponse, transactions] = await Promise.all([
-        api.admin.getAllUsers(filters),
-        api.admin.getAllUsers({ page: 1, limit: 1 }),
-        api.admin.getAllUsers({ page: 1, limit: 1, status: 'ACTIVE' }),
-        api.admin.getAllUsers({ page: 1, limit: 1, status: 'BLOCKED' }),
+      const [allUsers, transactions] = await Promise.all([
+        api.admin.getAllUsers(),
         api.admin.getAllTransactions(),
       ]);
 
-      setUsers(usersResponse.data);
-      setUsersMeta(usersResponse.meta);
+      // Apply filters
+      let filteredUsers = allUsers.filter((user: any) => {
+        const matchesSearch =
+          !deferredSearch ||
+          user.name?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+          user.email?.toLowerCase().includes(deferredSearch.toLowerCase());
+        const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+        const matchesStatus =
+          statusFilter === "ALL" || user.status === statusFilter;
+        return matchesSearch && matchesRole && matchesStatus;
+      });
+
+      // Pagination
+      const total = filteredUsers.length;
+      const totalPages = Math.ceil(total / USERS_PER_PAGE);
+      const startIndex = (page - 1) * USERS_PER_PAGE;
+      const paginatedUsers = filteredUsers.slice(
+        startIndex,
+        startIndex + USERS_PER_PAGE,
+      );
+
+      setUsers(paginatedUsers);
+      setUsersMeta({
+        page,
+        limit: USERS_PER_PAGE,
+        total,
+        totalPages,
+      });
       setAnalytics({
-        totalUsers: allUsersResponse.meta.total,
-        activeUsers: activeUsersResponse.meta.total,
-        blockedUsers: blockedUsersResponse.meta.total,
-        totalCreditsDistributed: transactions.reduce((sum: number, transaction: { type?: string; amount: number }) => {
-          const isAdminCredit = transaction.type?.toUpperCase().includes('CREDIT');
-          return isAdminCredit && transaction.amount > 0 ? sum + transaction.amount : sum;
-        }, 0),
+        totalUsers: allUsers.length,
+        activeUsers: allUsers.filter((u: any) => u.status === "ACTIVE").length,
+        blockedUsers: allUsers.filter((u: any) => u.status === "BLOCKED")
+          .length,
+        totalCreditsDistributed: transactions.reduce(
+          (sum: number, transaction: { type?: string; amount: number }) => {
+            const isAdminCredit = transaction.type
+              ?.toUpperCase()
+              .includes("CREDIT");
+            return isAdminCredit && transaction.amount > 0
+              ? sum + transaction.amount
+              : sum;
+          },
+          0,
+        ),
       });
     } catch {
-      toast.error('Failed to load admin user data');
+      toast.error("Failed to load admin user data");
     } finally {
       setLoading(false);
     }
@@ -215,7 +252,7 @@ export default function AdminUsers() {
       ? new Date(selectedUserProfile.lastLogin).toLocaleString()
       : selectedUserProfile.updatedAt
         ? new Date(selectedUserProfile.updatedAt).toLocaleString()
-        : 'Not available';
+        : "Not available";
 
     return {
       totalCredits: selectedUserProfile.credits ?? 0,
@@ -223,19 +260,23 @@ export default function AdminUsers() {
       totalPaymentRequests: selectedUserPayments.length,
       lastLoginLabel,
     };
-  }, [selectedUserPayments.length, selectedUserProfile, selectedUserTransactions.length]);
+  }, [
+    selectedUserPayments.length,
+    selectedUserProfile,
+    selectedUserTransactions.length,
+  ]);
 
   const openUserModal = async (user: AdminUser) => {
     setSelectedUserId(user._id);
     setSelectedUserProfile(null);
-    setModalTab('overview');
-    setCreditAmount('');
+    setModalTab("overview");
+    setCreditAmount("");
     setRoleDraft(user.role);
 
     try {
       await refreshSelectedUser(user._id);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load user details');
+      toast.error(err.message || "Failed to load user details");
       setSelectedUserId(null);
     }
   };
@@ -245,18 +286,18 @@ export default function AdminUsers() {
     const amount = parseInt(creditAmount, 10);
 
     if (Number.isNaN(amount) || amount <= 0) {
-      toast.error('Enter a valid amount');
+      toast.error("Enter a valid amount");
       return;
     }
 
-    setLoadingAction('credit');
+    setLoadingAction("credit");
     try {
       await api.admin.creditWallet(selectedUserId, amount);
       toast.success(`Credited ${amount} coins to ${selectedUser.name}`);
-      setCreditAmount('');
+      setCreditAmount("");
       await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to credit wallet');
+      toast.error(err.message || "Failed to credit wallet");
     } finally {
       setLoadingAction(null);
     }
@@ -267,18 +308,18 @@ export default function AdminUsers() {
     const amount = parseInt(creditAmount, 10);
 
     if (Number.isNaN(amount) || amount <= 0) {
-      toast.error('Enter a valid amount');
+      toast.error("Enter a valid amount");
       return;
     }
 
-    setLoadingAction('deduct');
+    setLoadingAction("deduct");
     try {
       await api.admin.deductWallet(selectedUserId, amount);
       toast.success(`Deducted ${amount} coins from ${selectedUser.name}`);
-      setCreditAmount('');
+      setCreditAmount("");
       await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to deduct wallet');
+      toast.error(err.message || "Failed to deduct wallet");
     } finally {
       setLoadingAction(null);
     }
@@ -287,13 +328,15 @@ export default function AdminUsers() {
   const handleToggleBlock = async () => {
     if (!selectedUserId || !selectedUser) return;
 
-    setLoadingAction('block');
+    setLoadingAction("block");
     try {
       await api.admin.updateUserStatus(selectedUserId, !selectedUser.isActive);
-      toast.success(`${selectedUser.name} has been ${selectedUser.isActive ? 'blocked' : 'unblocked'}`);
+      toast.success(
+        `${selectedUser.name} has been ${selectedUser.isActive ? "blocked" : "unblocked"}`,
+      );
       await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update user status');
+      toast.error(err.message || "Failed to update user status");
     } finally {
       setLoadingAction(null);
     }
@@ -303,17 +346,17 @@ export default function AdminUsers() {
     if (!selectedUserId || !selectedUser) return;
 
     if (roleDraft === selectedUser.role) {
-      toast.error('Select a different role');
+      toast.error("Select a different role");
       return;
     }
 
-    setLoadingAction('role');
+    setLoadingAction("role");
     try {
       await api.admin.updateUserRole(selectedUserId, roleDraft);
       toast.success(`${selectedUser.name} is now ${roleDraft}`);
       await Promise.all([loadData(), refreshSelectedUser(selectedUserId)]);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update user role');
+      toast.error(err.message || "Failed to update user role");
     } finally {
       setLoadingAction(null);
     }
@@ -322,19 +365,21 @@ export default function AdminUsers() {
   const handleDeleteAccount = async () => {
     if (!selectedUserId || !selectedUser) return;
 
-    const confirmed = window.confirm(`Delete ${selectedUser.name}'s account? This action cannot be undone.`);
+    const confirmed = window.confirm(
+      `Delete ${selectedUser.name}'s account? This action cannot be undone.`,
+    );
     if (!confirmed) return;
 
-    setLoadingAction('delete');
+    setLoadingAction("delete");
     try {
       await api.admin.deleteUser(selectedUserId);
       toast.success(`${selectedUser.name}'s account was deleted`);
       setSelectedUserId(null);
       setSelectedUserProfile(null);
-      setCreditAmount('');
+      setCreditAmount("");
       await loadData();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to delete user account');
+      toast.error(err.message || "Failed to delete user account");
     } finally {
       setLoadingAction(null);
     }
@@ -344,38 +389,40 @@ export default function AdminUsers() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-2xl font-bold text-white">Users</h1>
-        <p className="text-sm text-white/40">Monitor accounts, wallet activity, and payment request trends.</p>
+        <p className="text-sm text-white/40">
+          Monitor accounts, wallet activity, and payment request trends.
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
-            label: 'Total Users',
+            label: "Total Users",
             value: analytics.totalUsers,
             icon: UsersIcon,
-            color: 'text-white',
-            bg: 'bg-white/[0.03]',
+            color: "text-white",
+            bg: "bg-white/[0.03]",
           },
           {
-            label: 'Active Users',
+            label: "Active Users",
             value: analytics.activeUsers,
             icon: UsersIcon,
-            color: 'text-green-300',
-            bg: 'bg-green-500/10',
+            color: "text-green-300",
+            bg: "bg-green-500/10",
           },
           {
-            label: 'Blocked Users',
+            label: "Blocked Users",
             value: analytics.blockedUsers,
             icon: ShieldAlert,
-            color: 'text-red-300',
-            bg: 'bg-red-500/10',
+            color: "text-red-300",
+            bg: "bg-red-500/10",
           },
           {
-            label: 'Credits Distributed',
+            label: "Credits Distributed",
             value: analytics.totalCreditsDistributed,
             icon: Wallet,
-            color: 'text-primary',
-            bg: 'bg-primary/10',
+            color: "text-primary",
+            bg: "bg-primary/10",
           },
         ].map((card) => (
           <div
@@ -384,10 +431,16 @@ export default function AdminUsers() {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-white/35">{card.label}</p>
-                <p className="mt-3 text-3xl font-bold text-white">{card.value}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-white/35">
+                  {card.label}
+                </p>
+                <p className="mt-3 text-3xl font-bold text-white">
+                  {card.value}
+                </p>
               </div>
-              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.bg}`}>
+              <div
+                className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.bg}`}
+              >
                 <card.icon className={`h-5 w-5 ${card.color}`} />
               </div>
             </div>
@@ -398,7 +451,9 @@ export default function AdminUsers() {
       <div className="rounded-3xl border border-white/8 bg-[hsl(220,18%,10%)] p-4 shadow-[0_20px_45px_rgba(0,0,0,0.25)] sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
           <div className="space-y-2">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">Search Users</label>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">
+              Search Users
+            </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
               <input
@@ -411,9 +466,19 @@ export default function AdminUsers() {
             </div>
           </div>
 
-          <FilterSelect label="Role Filter" value={roleFilter} options={roleOptions} onChange={setRoleFilter} />
+          <FilterSelect
+            label="Role Filter"
+            value={roleFilter}
+            options={roleOptions}
+            onChange={setRoleFilter}
+          />
 
-          <FilterSelect label="Status Filter" value={statusFilter} options={statusOptions} onChange={setStatusFilter} />
+          <FilterSelect
+            label="Status Filter"
+            value={statusFilter}
+            options={statusOptions}
+            onChange={setStatusFilter}
+          />
         </div>
       </div>
 
@@ -440,7 +505,7 @@ export default function AdminUsers() {
         onClose={() => {
           setSelectedUserId(null);
           setSelectedUserProfile(null);
-          setCreditAmount('');
+          setCreditAmount("");
           setLoadingAction(null);
         }}
         onTabChange={setModalTab}

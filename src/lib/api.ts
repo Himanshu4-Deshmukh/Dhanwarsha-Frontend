@@ -1,7 +1,6 @@
 const API_BASE =
-  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
-  // import.meta.env.VITE_API_URL || "http://localhost:8001/api";
-
+  // import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
+  "http://localhost:8001/api";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
   const isFormData =
@@ -28,13 +27,13 @@ function toQueryString(params: Record<string, string | number | undefined>) {
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== '') {
+    if (value !== undefined && value !== "") {
       searchParams.set(key, String(value));
     }
   });
 
   const query = searchParams.toString();
-  return query ? `?${query}` : '';
+  return query ? `?${query}` : "";
 }
 
 export const api = {
@@ -116,24 +115,8 @@ export const api = {
 
   // Admin
   admin: {
-    getAllUsers: (params?: {
-      page?: number;
-      limit?: number;
-      search?: string;
-      role?: string;
-      status?: string;
-      email?: string;
-    }) =>
-      request<any>(
-        `/users${toQueryString({
-          page: params?.page,
-          limit: params?.limit,
-          search: params?.search,
-          role: params?.role,
-          status: params?.status,
-          email: params?.email,
-        })}`,
-      ),
+    getAllUsers: () => request<any[]>("/admin/users"),
+    getAllUsersCount: () => request<any[]>("/admin/users"),
     getUserById: (userId: string) => request<any>(`/users/${userId}`),
     getAllBets: () => request<any[]>("/admin/bets"),
     getAllTransactions: () => request<any[]>("/admin/transactions"),
