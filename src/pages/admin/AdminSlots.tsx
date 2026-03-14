@@ -168,8 +168,8 @@ export default function AdminSlots() {
         transition={{ delay: index * 0.03 }}
         className="overflow-hidden rounded-xl border border-white/5 bg-white/5"
       >
-        <div className="flex items-center gap-4 p-4">
-          <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${sc.bg}`}>
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+          <div className={`flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 ${sc.bg}`}>
             <div className={`h-1.5 w-1.5 rounded-full ${sc.dot} ${slot.status === 'OPEN' ? 'animate-pulse' : ''}`} />
             <span className={`text-xs font-semibold ${sc.text}`}>{slot.status}</span>
           </div>
@@ -178,7 +178,7 @@ export default function AdminSlots() {
             <p className="text-sm font-semibold text-white">
               {slot.windowLabel || `${new Date(slot.startTime).toLocaleString()} -> ${new Date(slot.endTime).toLocaleTimeString()}`}
             </p>
-            <div className="mt-1 flex items-center gap-3 text-xs text-white/40">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/40">
               <span className="flex items-center gap-1">
                 <Coins className="h-3 w-3" /> Bet: {slot.betAmount ?? '--'}
               </span>
@@ -196,7 +196,7 @@ export default function AdminSlots() {
           {canExpand && (
             <button
               onClick={() => toggleExpand(slot)}
-              className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition-colors hover:text-white"
+              className="flex w-full items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 transition-colors hover:text-white sm:ml-auto sm:w-auto sm:justify-start sm:py-1.5"
             >
               <Eye className="h-3.5 w-3.5" />
               {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -268,7 +268,7 @@ export default function AdminSlots() {
                       <Target className="h-4 w-4" />
                       Set Winning Number
                     </h3>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row">
                       <input
                         type="number"
                         min={0}
@@ -317,7 +317,7 @@ export default function AdminSlots() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-white">Today Slots</h1>
           <p className="mt-1 text-sm text-white/40">
@@ -357,7 +357,7 @@ function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, an
   const max = Math.max(...Object.values(exposure).map((v: any) => v.totalAmount || 0), 1);
 
   return (
-    <div className="grid grid-cols-10 gap-1">
+    <div className="grid grid-cols-5 gap-1 sm:grid-cols-10">
       {Array.from({ length: 100 }, (_, i) => {
         const data = exposure[i] || { count: 0, totalAmount: 0 };
         const intensity = data.totalAmount / max;

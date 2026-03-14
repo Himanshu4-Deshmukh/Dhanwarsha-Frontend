@@ -90,7 +90,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         {/* Recent Bets */}
         <div className="rounded-xl border border-white/5 bg-white/5 p-5">
           <div className="mb-4 flex items-center justify-between">
@@ -104,13 +104,13 @@ export default function AdminDashboard() {
               <p className="text-center text-xs text-white/30 py-4">No bets yet</p>
             ) : (
               recentBets.map((bet: any) => (
-                <div key={bet._id} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                  <div className="flex items-center gap-3">
+                <div key={bet._id} className="flex flex-col gap-3 rounded-lg bg-white/5 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/20 text-xs font-bold text-primary">
                       #{bet.number}
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-white/80">{bet.userId?.name || 'User'}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-white/80">{bet.userId?.name || 'User'}</p>
                       <p className="text-xs text-white/30">{bet.amount} coins</p>
                     </div>
                   </div>
@@ -134,13 +134,13 @@ export default function AdminDashboard() {
               <p className="text-center text-xs text-white/30 py-4">No pending payments 🎉</p>
             ) : (
               recentPayments.map((pay: any) => (
-                <div key={pay._id} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                  <div className="flex items-center gap-3">
+                <div key={pay._id} className="flex flex-col gap-3 rounded-lg bg-white/5 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500/20 text-xs font-bold text-yellow-400">
                       <Coins className="h-4 w-4" />
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-white/80">{pay.userId?.name || 'User'}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-white/80">{pay.userId?.name || 'User'}</p>
                       <p className="text-xs text-white/30">{pay.amount} coins requested</p>
                     </div>
                   </div>
