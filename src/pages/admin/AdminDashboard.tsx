@@ -64,7 +64,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-1">
         <h1 className="text-2xl font-bold text-white font-display">Dashboard</h1>
         <p className="mt-1 text-sm text-white/40">Welcome back, Admin. Here's an overview.</p>
       </div>
@@ -93,9 +93,9 @@ export default function AdminDashboard() {
       <div className="grid gap-4 xl:grid-cols-2">
         {/* Recent Bets */}
         <div className="rounded-xl border border-white/5 bg-white/5 p-5">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-white/80">Recent Bets</h2>
-            <Link to="/admin/bets" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <Link to="/admin/bets" className="flex shrink-0 items-center gap-1 text-xs text-primary hover:underline">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
@@ -123,15 +123,15 @@ export default function AdminDashboard() {
 
         {/* Pending Payments */}
         <div className="rounded-xl border border-white/5 bg-white/5 p-5">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-white/80">Pending Payments</h2>
-            <Link to="/admin/payments" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <Link to="/admin/payments" className="flex shrink-0 items-center gap-1 text-xs text-primary hover:underline">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
           <div className="space-y-2">
             {recentPayments.length === 0 ? (
-              <p className="text-center text-xs text-white/30 py-4">No pending payments 🎉</p>
+              <p className="py-4 text-center text-xs text-white/30">No pending payments</p>
             ) : (
               recentPayments.map((pay: any) => (
                 <div key={pay._id} className="flex flex-col gap-3 rounded-lg bg-white/5 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">

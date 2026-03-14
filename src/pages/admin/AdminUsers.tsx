@@ -77,7 +77,7 @@ export default function AdminUsers() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
+              className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-4 sm:p-6"
             >
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white font-display">Credit Wallet</h2>
@@ -87,9 +87,9 @@ export default function AdminUsers() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
                   {creditModal.user.name?.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{creditModal.user.name}</p>
-                  <p className="text-xs text-white/40">{creditModal.user.email}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{creditModal.user.name}</p>
+                  <p className="truncate text-xs text-white/40">{creditModal.user.email}</p>
                 </div>
               </div>
               <div className="mb-4">
@@ -103,7 +103,7 @@ export default function AdminUsers() {
                   autoFocus
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setCreditModal(null)}
                   className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-white/60 hover:text-white"

@@ -152,7 +152,7 @@ export default function AdminLayout() {
             <p className="text-sm font-semibold text-white sm:hidden">Admin Panel</p>
             <p className="hidden text-sm font-semibold text-white/80 sm:block">DhanWarsha Admin</p>
           </div>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+          <div className="ml-auto flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
             <Coins className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold text-white/60">Admin</span>
           </div>

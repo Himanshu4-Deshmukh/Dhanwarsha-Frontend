@@ -113,7 +113,7 @@ export default function AdminPayments() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-6"
+              className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-4 sm:p-6"
             >
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white font-display">Payment Request</h2>
@@ -125,18 +125,18 @@ export default function AdminPayments() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
                   {viewPayment.userId?.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{viewPayment.userId?.name || 'User'}</p>
-                  <p className="text-xs text-white/40">{viewPayment.userId?.email}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{viewPayment.userId?.name || 'User'}</p>
+                  <p className="truncate text-xs text-white/40">{viewPayment.userId?.email}</p>
                 </div>
-                <div className="ml-auto">
+                <div className="ml-auto shrink-0">
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusConfig[viewPayment.status]?.bg} ${statusConfig[viewPayment.status]?.text}`}>
                     {viewPayment.status}
                   </span>
                 </div>
               </div>
 
-              <div className="mb-4 grid grid-cols-2 gap-3">
+              <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-lg bg-white/5 p-3">
                   <p className="text-xs text-white/40 mb-1">Amount</p>
                   <p className="text-xl font-bold text-primary font-display">{viewPayment.amount}</p>

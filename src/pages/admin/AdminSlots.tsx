@@ -290,12 +290,12 @@ export default function AdminSlots() {
                 )}
 
                 <div>
-                  <div className="mb-3 flex items-center justify-between">
+                  <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="flex items-center gap-2 text-sm font-semibold text-white/80">
                       <BarChart2 className="h-4 w-4" />
                       Bet Exposure (0-99)
                     </h3>
-                    <button onClick={() => fetchExposure(slot._id)} className="text-xs text-primary hover:underline">
+                    <button onClick={() => fetchExposure(slot._id)} className="w-fit text-xs text-primary hover:underline">
                       Refresh
                     </button>
                   </div>
@@ -326,7 +326,7 @@ export default function AdminSlots() {
         </div>
         <button
           onClick={() => fetchSlots()}
-          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/60 transition-colors hover:text-white"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/60 transition-colors hover:text-white sm:w-auto"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
@@ -357,7 +357,7 @@ function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, an
   const max = Math.max(...Object.values(exposure).map((v: any) => v.totalAmount || 0), 1);
 
   return (
-    <div className="grid grid-cols-5 gap-1 sm:grid-cols-10">
+    <div className="grid grid-cols-5 gap-1 min-[420px]:grid-cols-6 sm:grid-cols-10">
       {Array.from({ length: 100 }, (_, i) => {
         const data = exposure[i] || { count: 0, totalAmount: 0 };
         const intensity = data.totalAmount / max;
