@@ -19,6 +19,8 @@ export default function AdminWithdrawals() {
     const [viewItem, setViewItem] = useState<any | null>(null);
     const [remarkInputs, setRemarkInputs] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
+    const [page, setPage] = useState(1);
+    const WITHDRAWALS_PER_PAGE = 5;
 
     const fetchWithdrawals = async () => {
         try {
@@ -33,7 +35,12 @@ export default function AdminWithdrawals() {
 
     useEffect(() => { fetchWithdrawals(); }, []);
 
+    // Reset to page 1 when filter changes
+    useEffect(() => { setPage(1); }, [filter]);
+
     const filtered = withdrawals.filter((w) => filter === 'ALL' || w.status === filter);
+    const totalPages = Math.ceil(filtered.length / WITHDRAWALS_PER_PAGE) || 1;
+    const paginated = filtered.slice((page - 1) * WITHDRAWALS_PER_PAGE, page * WITHDRAWALS_PER_PAGE);
 
     const handleApprove = async (id: string) => {
         setSubmitting((prev) => ({ ...prev, [id]: true }));
@@ -271,7 +278,7 @@ export default function AdminWithdrawals() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {filtered.length === 0 ? (
+                                {paginated.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="py-10 text-center text-white/30">
                                             <ArrowUpFromLine className="mx-auto mb-2 h-8 w-8 opacity-30" />
@@ -279,7 +286,7 @@ export default function AdminWithdrawals() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filtered.map((w, i) => {
+                                    paginated.map((w, i) => {
                                         const sc = statusConfig[w.status] || { bg: 'bg-white/5', text: 'text-white/40', border: '' };
                                         return (
                                             <tr key={w._id} className="transition-colors hover:bg-white/5">
@@ -355,13 +362,13 @@ export default function AdminWithdrawals() {
 
                     {/* Mobile cards */}
                     <div className="divide-y divide-white/5 md:hidden">
-                        {filtered.length === 0 ? (
+                        {paginated.length === 0 ? (
                             <div className="py-10 text-center text-white/30">
                                 <ArrowUpFromLine className="mx-auto mb-2 h-8 w-8 opacity-30" />
                                 No withdrawals found
                             </div>
                         ) : (
-                            filtered.map((w) => {
+                            paginated.map((w) => {
                                 const sc = statusConfig[w.status] || { bg: 'bg-white/5', text: 'text-white/40', border: '' };
                                 return (
                                     <div key={w._id} className="space-y-3 p-4">
@@ -434,6 +441,50 @@ export default function AdminWithdrawals() {
                             })
                         )}
                     </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex flex-col gap-3 border-t border-white/8 bg-white/[0.02] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                            <p className="text-xs text-white/40">
+                                Page {page} of {totalPages}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(Math.max(1, page - 1))}
+                                    disabled={page === 1}
+                                    className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Previous
+                                </button>
+                                {Array.from({ length: totalPages }, (_, index) => {
+                                    const nextPage = index + 1;
+                                    return (
+                                        <button
+                                            key={nextPage}
+                                            type="button"
+                                            onClick={() => setPage(nextPage)}
+                                            className={`h-9 min-w-9 rounded-xl px-3 text-xs font-semibold transition-colors ${
+                                                nextPage === page
+                                                    ? 'bg-primary text-[hsl(220,20%,7%)]'
+                                                    : 'border border-white/10 text-white/60 hover:bg-white/5 hover:text-white'
+                                            }`}
+                                        >
+                                            {nextPage}
+                                        </button>
+                                    );
+                                })}
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                                    disabled={page === totalPages}
+                                    className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
