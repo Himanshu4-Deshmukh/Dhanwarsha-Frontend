@@ -32,7 +32,7 @@ import type {
   UserStatusFilter,
 } from "@/components/admin/users/types";
 
-const USERS_PER_PAGE = 8;
+const USERS_PER_PAGE = 5;
 
 type FilterSelectOption<T extends string> = {
   label: string;
