@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -45,6 +45,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
 export default function AdminPastSlots() {
   const [pastSlots, setPastSlots] = useState<SlotRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [exposure, setExposure] = useState<Record<string, any>>({});
   const [winningInputs, setWinningInputs] = useState<Record<string, string>>(
@@ -178,16 +179,26 @@ export default function AdminPastSlots() {
     }
   };
 
-  const groupedPastSlots: [string, SlotRecord[]][] = Object.entries(
-    pastSlots.reduce<Record<string, SlotRecord[]>>((acc, slot) => {
-      const date = new Date(slot.startTime).toDateString();
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(slot);
-      return acc;
-    }, {}),
-  ).sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
+  const groupedPastSlots = useMemo<[string, SlotRecord[]][]>(() => {
+    return Object.entries(
+      pastSlots.reduce<Record<string, SlotRecord[]>>((acc, slot) => {
+        const date = new Date(slot.startTime).toDateString();
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(slot);
+        return acc;
+      }, {}),
+    ).sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
+  }, [pastSlots]);
+
+  const totalPages = Math.max(groupedPastSlots.length, 1);
+  const currentPage = Math.min(page, totalPages);
+  const visibleDayGroup = groupedPastSlots[currentPage - 1] ?? null;
+
+  useEffect(() => {
+    setPage((prev) => Math.min(Math.max(prev, 1), totalPages));
+  }, [totalPages]);
 
   const renderSlotCard = (slot: SlotRecord, index: number) => {
     const sc = STATUS_COLORS[slot.status] || STATUS_COLORS.CLOSED;
@@ -393,7 +404,8 @@ export default function AdminPastSlots() {
             Past Slots
           </h1>
           <p className="mt-1 text-sm text-white/40">
-            All slots except today&apos;s fixed 4 windows.
+            Page 1 shows yesterday&apos;s slots. Older dates continue on later
+            pages.
           </p>
         </div>
         <button
@@ -414,23 +426,75 @@ export default function AdminPastSlots() {
           <Clock className="mx-auto mb-3 h-8 w-8 text-white/20" />
           <p className="text-white/40">No past slots yet.</p>
         </div>
-      ) : (
+      ) : visibleDayGroup ? (
         <div className="space-y-6">
-          {groupedPastSlots.map(([date, daySlots]) => (
-            <div key={date} className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-white/40">
-                {new Date(date).toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </h3>
-              {daySlots.map((slot, i) => renderSlotCard(slot, i))}
+          <div className="space-y-3">
+            <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-white/40">
+                  {new Date(visibleDayGroup[0]).toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </h3>
+                <p className="mt-1 text-xs text-white/35">
+                  {currentPage === 1
+                    ? "Yesterday's slots"
+                    : `Past slots page ${currentPage}`}
+                </p>
+              </div>
             </div>
-          ))}
+
+            {visibleDayGroup[1].map((slot, i) => renderSlotCard(slot, i))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex flex-col gap-3 rounded-xl border border-white/5 bg-white/5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <p className="text-xs text-white/40">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const nextPage = index + 1;
+
+                  return (
+                    <button
+                      key={nextPage}
+                      type="button"
+                      onClick={() => setPage(nextPage)}
+                      className={`h-9 min-w-9 rounded-xl px-3 text-xs font-semibold transition-colors ${
+                        nextPage === currentPage
+                          ? "bg-gradient-gold text-[hsl(220,20%,7%)]"
+                          : "border border-white/10 text-white/60 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      {nextPage}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
