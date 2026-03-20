@@ -63,10 +63,10 @@ const BetsPage = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary font-display font-bold text-primary">
-                    {bet.number}
+                    {String(bet.number).padStart(2, '0')}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Number #{bet.number}</p>
+                    <p className="text-sm font-medium">Number #{String(bet.number).padStart(2, '0')}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(bet.createdAt).toLocaleDateString()} · {bet.amount} coins
                     </p>

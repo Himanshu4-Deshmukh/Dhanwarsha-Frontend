@@ -187,7 +187,7 @@ export default function AdminSlots() {
               </span>
               {slot.winningNumber !== undefined && slot.winningNumber !== null && (
                 <span className="flex items-center gap-1 text-primary">
-                  <Target className="h-3 w-3" /> Winner: #{slot.winningNumber}
+                  <Target className="h-3 w-3" /> Winner: #{String(slot.winningNumber).padStart(2, '0')}
                 </span>
               )}
             </div>
@@ -366,7 +366,7 @@ function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, an
         return (
           <div
             key={i}
-            title={`#${i}: ${data.count} bets, ${data.totalAmount} coins`}
+            title={`#${String(i).padStart(2, '0')}: ${data.count} bets, ${data.totalAmount} coins`}
             className={`relative flex aspect-square cursor-default flex-col items-center justify-center rounded text-center transition-all ${
               isWinner
                 ? 'bg-primary/20 ring-2 ring-primary'
@@ -381,7 +381,7 @@ function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, an
                 isWinner ? 'text-primary' : data.count > 0 ? 'text-red-400' : 'text-white/20'
               }`}
             >
-              {i}
+              {String(i).padStart(2, '0')}
             </span>
             {data.count > 0 && <span className="mt-0.5 text-[7px] leading-none text-white/40">{data.count}</span>}
           </div>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -196,7 +196,7 @@ const HomePage = () => {
     try {
       await api.placeBet(selectedSlot._id, selectedNumber);
 
-      toast.success(`Bet placed on #${selectedNumber}`, {
+      toast.success(`Bet placed on #${String(selectedNumber).padStart(2, '0')}`, {
         description: `${selectedSlot.betAmount} coins deducted. Win ${selectedSlot.winAmount} coins.`,
       });
 
@@ -335,7 +335,7 @@ const HomePage = () => {
                 <span className="font-bold text-green-400">{slot.winAmount ?? "--"} coins</span>
 
                 {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
-                  <p className="mt-1 text-xs font-bold text-primary">Winning Number: #{slot.winningNumber}</p>
+                  <p className="mt-1 text-xs font-bold text-primary">Winning Number: #{String(slot.winningNumber).padStart(2, '0')}</p>
                 )}
 
                 {isUpcoming && (
@@ -379,7 +379,7 @@ const HomePage = () => {
                                 : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
                           }`}
                         >
-                          {i}
+                          {String(i).padStart(2, '0')}
                           {isMyBet && (
                             <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
                           )}
@@ -418,7 +418,7 @@ const HomePage = () => {
 
               <div className="mb-5 text-center">
                 <div className="gold-glow mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-gold">
-                  <span className="text-3xl font-bold text-black">{selectedNumber}</span>
+                  <span className="text-3xl font-bold text-black">{String(selectedNumber).padStart(2, '0')}</span>
                 </div>
               </div>
 
