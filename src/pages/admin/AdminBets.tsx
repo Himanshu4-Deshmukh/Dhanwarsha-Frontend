@@ -148,7 +148,7 @@ export default function AdminBets() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-sm font-bold text-primary">
-                            {bet.number}
+                            {String(bet.number).padStart(2, '0')}
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -207,7 +207,7 @@ export default function AdminBets() {
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div className="rounded-lg bg-white/5 p-3">
                         <p className="text-white/30">Number</p>
-                        <p className="mt-1 text-lg font-bold text-primary">{bet.number}</p>
+                        <p className="mt-1 text-lg font-bold text-primary">{String(bet.number).padStart(2, '0')}</p>
                       </div>
                       <div className="rounded-lg bg-white/5 p-3">
                         <p className="text-white/30">Amount</p>

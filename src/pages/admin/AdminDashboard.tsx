@@ -161,7 +161,7 @@ export default function AdminDashboard() {
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/20 text-xs font-bold text-primary">
-                      #{bet.number}
+                      #{String(bet.number).padStart(2, '0')}
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium text-white/80">
