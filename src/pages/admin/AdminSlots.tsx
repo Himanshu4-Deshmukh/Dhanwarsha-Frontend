@@ -357,7 +357,7 @@ function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, an
   const maxAmount = Math.max(...Object.values(exposure).map((v: any) => v.totalAmount || 0), 1);
 
   return (
-    <div className="grid grid-cols-5 gap-2 min-[420px]:grid-cols-6 sm:grid-cols-10">
+    <div className="relative z-0 grid grid-cols-5 gap-2 min-[420px]:grid-cols-6 sm:grid-cols-10">
       {Array.from({ length: 100 }, (_, i) => {
         const data = exposure[i] || { count: 0, totalAmount: 0 };
         const isWinner = winningNumber !== undefined && winningNumber !== null && Number(winningNumber) === i;
@@ -371,10 +371,10 @@ function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, an
 
         if (isWinner) {
           if (isHighRisk) {
-            containerClasses = "bg-gradient-to-t from-red-600 to-amber-400 text-white border-yellow-300 z-30 animate-fire ring-2 ring-white/50";
-            specialIcon = <div className="absolute -top-10 text-[58px]">🔥</div>;
+            containerClasses = "bg-gradient-to-t from-red-600 to-amber-400 text-white border-yellow-300 animate-fire ring-2 ring-white/50";
+            specialIcon = <div className="absolute -top-5 text-[25px]">🔥</div>;
           } else {
-            containerClasses = "bg-primary/40 text-primary border-primary ring-2 ring-primary/50 z-20 scale-110 shadow-lg";
+            containerClasses = "bg-primary/40 text-primary border-primary ring-2 ring-primary/50 scale-110 shadow-lg";
             specialIcon = <Trophy className="absolute -top-2 h-3 w-3 fill-primary stroke-black" />;
           }
         }
