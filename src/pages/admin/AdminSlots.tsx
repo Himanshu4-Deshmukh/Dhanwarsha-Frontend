@@ -117,7 +117,7 @@ export default function AdminSlots() {
 
     setSubmitting((prev) => ({ ...prev, [slotId]: true }));
     try {
-      await api.setWinningNumber(slotId, num);
+      await api.setWinningNumber(slotId, String(num).padStart(2, '0'));
       toast.success(`Winning number ${num} set`);
       await fetchSlots(true);
     } catch (err: any) {

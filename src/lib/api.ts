@@ -68,7 +68,7 @@ export const api = {
     betAmount: number;
     winAmount: number;
   }) => request<any>("/slots", { method: "POST", body: JSON.stringify(data) }),
-  setWinningNumber: (slotId: string, winningNumber: number) =>
+  setWinningNumber: (slotId: string, winningNumber: string) =>
     request<any>(`/slots/${slotId}/winning-number`, {
       method: "POST",
       body: JSON.stringify({ winningNumber }),
