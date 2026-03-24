@@ -35,6 +35,7 @@ const HomePage = () => {
   const [timeLeft, setTimeLeft] = useState("");
   const [betConfirmOpen, setBetConfirmOpen] = useState(false);
   const [myBets, setMyBets] = useState<any[]>([]);
+  const [customBetAmount, setCustomBetAmount] = useState<number>(10);
 
   const buildWindowDate = useCallback(
     (baseDate: Date, window: FixedSlotWindow, forEnd = false) => {
@@ -192,23 +193,32 @@ const HomePage = () => {
   const placeBet = async () => {
     if (selectedNumber === null || !selectedSlot) return;
 
+    if (customBetAmount <= 0) {
+      toast.error("Bet amount must be greater than 0");
+      return;
+    }
+
     setBetting(true);
     try {
-      await api.placeBet(selectedSlot._id, selectedNumber);
+      await api.placeBet(selectedSlot._id, String(selectedNumber).padStart(2, '0'), customBetAmount);
+
+      const multiplier = (selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10);
+      const winEstimate = customBetAmount * multiplier;
 
       toast.success(`Bet placed on #${String(selectedNumber).padStart(2, '0')}`, {
-        description: `${selectedSlot.betAmount} coins deducted. Win ${selectedSlot.winAmount} coins.`,
+        description: `${customBetAmount} coins deducted. Win ${winEstimate} coins.`,
       });
 
       setBetConfirmOpen(false);
       setSelectedNumber(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message || "Failed to place bet");
+      toast.error(err.message || "Failed to place bet. Make sure your balance is sufficient.");
     } finally {
       setBetting(false);
     }
   };
+
 
   const activeBets = selectedSlot
     ? myBets.filter((b) => {
@@ -360,7 +370,7 @@ const HomePage = () => {
                 >
                   <div className="grid grid-cols-10 gap-1.5">
                     {Array.from({ length: 100 }, (_, i) => {
-                      const isMyBet = activeBets.some((b) => b.number === i);
+                      const isMyBet = activeBets.some((b) => Number(b.number) === i);
 
                       return (
                         <motion.button
@@ -368,6 +378,7 @@ const HomePage = () => {
                           whileTap={{ scale: 0.85 }}
                           onClick={() => {
                             setSelectedNumber(i);
+                            setCustomBetAmount(selectedSlot.betAmount || 10);
                             setBetConfirmOpen(true);
                           }}
                           disabled={isDisabled}
@@ -422,12 +433,29 @@ const HomePage = () => {
                 </div>
               </div>
 
-              <p className="mb-4 text-center text-sm text-white/50">Cost: {selectedSlot.betAmount} coins</p>
+              <div className="mb-4">
+                <label className="mb-2 block text-sm text-white/70">Bet Amount</label>
+                <input
+                  type="number"
+                  min={selectedSlot.betAmount || 10}
+                  step={selectedSlot.betAmount || 10}
+                  value={customBetAmount}
+                  onChange={(e) => setCustomBetAmount(Number(e.target.value))}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 p-3 text-white outline-none focus:border-primary/50"
+                  placeholder={`Multiple of ${selectedSlot.betAmount || 10}`}
+                />
+              </div>
+
+              <p className="mb-4 text-center text-sm text-white/50">
+                Cost: {customBetAmount} coins
+                <br />
+                Win: {customBetAmount * ((selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10))} coins
+              </p>
 
               <button
                 onClick={placeBet}
-                disabled={betting}
-                className="w-full rounded-xl bg-gradient-gold py-3 font-bold text-black"
+                disabled={betting || customBetAmount <= 0}
+                className="w-full rounded-xl bg-gradient-gold py-3 font-bold text-black disabled:opacity-50"
               >
                 {betting ? "Placing..." : "Place Bet"}
               </button>

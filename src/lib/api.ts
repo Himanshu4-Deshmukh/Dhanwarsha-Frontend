@@ -82,10 +82,10 @@ export const api = {
     request<any>(`/slots/${slotId}/exposure`),
 
   // Bets
-  placeBet: (slotId: string, number: number) =>
+  placeBet: (slotId: string, number: string, amount: number) =>
     request<any>("/bets", {
       method: "POST",
-      body: JSON.stringify({ slotId, number }),
+      body: JSON.stringify({ slotId, number, amount }),
     }),
   getMyBets: () => request<any[]>("/bets/my-bets"),
 
