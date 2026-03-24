@@ -353,37 +353,57 @@ export default function AdminSlots() {
   );
 }
 
-function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, any>; winningNumber?: number }) {
-  const max = Math.max(...Object.values(exposure).map((v: any) => v.totalAmount || 0), 1);
+function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, any>; winningNumber?: number | null }) {
+  const maxAmount = Math.max(...Object.values(exposure).map((v: any) => v.totalAmount || 0), 1);
 
   return (
-    <div className="grid grid-cols-5 gap-1 min-[420px]:grid-cols-6 sm:grid-cols-10">
+    <div className="grid grid-cols-5 gap-2 min-[420px]:grid-cols-6 sm:grid-cols-10">
       {Array.from({ length: 100 }, (_, i) => {
         const data = exposure[i] || { count: 0, totalAmount: 0 };
-        const intensity = data.totalAmount / max;
-        const isWinner = winningNumber === i;
+        const isWinner = winningNumber !== undefined && winningNumber !== null && Number(winningNumber) === i;
+
+        const riskPercentage = (data.totalAmount / maxAmount) * 100;
+        const isHighRisk = riskPercentage > 80 && data.totalAmount > 0;
+        const isMediumRisk = riskPercentage > 20 && riskPercentage <= 80;
+
+        let containerClasses = "bg-white/5 text-white/20 border-white/5";
+        let specialIcon = null;
+
+        if (isWinner) {
+          if (isHighRisk) {
+            containerClasses = "bg-gradient-to-t from-red-600 to-amber-400 text-white border-yellow-300 z-30 animate-fire ring-2 ring-white/50";
+            specialIcon = <div className="absolute -top-10 text-[58px]">🔥</div>;
+          } else {
+            containerClasses = "bg-primary/40 text-primary border-primary ring-2 ring-primary/50 z-20 scale-110 shadow-lg";
+            specialIcon = <Trophy className="absolute -top-2 h-3 w-3 fill-primary stroke-black" />;
+          }
+        }
+        else if (isHighRisk) {
+          containerClasses = "border-red-500 text-red-500 z-10 animate-red-alert ring-1 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+          specialIcon = <div className="absolute -top-2 text-[7px] font-black bg-red-600 text-white px-1 rounded-full">DANGER</div>;
+        }
+        else if (isMediumRisk) {
+          containerClasses = "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]";
+          specialIcon = <div className="absolute -top-2 text-[7px] font-black bg-amber-600 text-white px-1 rounded-full">HIGH</div>;
+        }
+        else if (data.count > 0) {
+          containerClasses = "bg-blue-500/10 text-blue-300 border-blue-500/20";
+        }
 
         return (
           <div
             key={i}
-            title={`#${String(i).padStart(2, '0')}: ${data.count} bets, ${data.totalAmount} coins`}
-            className={`relative flex aspect-square cursor-default flex-col items-center justify-center rounded text-center transition-all ${
-              isWinner
-                ? 'bg-primary/20 ring-2 ring-primary'
-                : data.count > 0
-                  ? 'bg-red-500/20 hover:bg-red-500/30'
-                  : 'bg-white/5'
-            }`}
-            style={data.count > 0 && !isWinner ? { opacity: 0.5 + intensity * 0.5 } : {}}
+            className={`relative flex aspect-square flex-col items-center justify-center rounded-lg border transition-all duration-300 font-black ${containerClasses}`}
           >
-            <span
-              className={`text-[9px] font-bold leading-none ${
-                isWinner ? 'text-primary' : data.count > 0 ? 'text-red-400' : 'text-white/20'
-              }`}
-            >
+            {specialIcon}
+            <span className={`text-[14px] ${isWinner ? 'scale-125' : ''}`}>
               {String(i).padStart(2, '0')}
             </span>
-            {data.count > 0 && <span className="mt-0.5 text-[7px] leading-none text-white/40">{data.count}</span>}
+            {data.count > 0 && (
+              <span className={`mt-0.5 text-[11px] ${isWinner || isHighRisk || isMediumRisk ? 'text-white' : 'opacity-60'}`}>
+                {data.totalAmount}
+              </span>
+            )}
           </div>
         );
       })}
