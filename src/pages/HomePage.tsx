@@ -369,34 +369,36 @@ const HomePage = () => {
                   className="mt-4"
                 >
                   <div className="grid grid-cols-10 gap-1.5">
-                    {Array.from({ length: 100 }, (_, i) => {
-                      const isMyBet = activeBets.some((b) => Number(b.number) === i);
-
-                      return (
-                        <motion.button
-                          key={i}
-                          whileTap={{ scale: 0.85 }}
-                          onClick={() => {
-                            setSelectedNumber(i);
-                            setCustomBetAmount(selectedSlot.betAmount || 10);
-                            setBetConfirmOpen(true);
-                          }}
-                          disabled={isDisabled}
-                          className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${
-                            isDisabled
+                    {Array.from(
+                      { length: selectedSlot.numberRange.end - selectedSlot.numberRange.start + 1 },
+                      (_, i) => {
+                        const num = selectedSlot.numberRange.start + i;
+                        const isMyBet = activeBets.some((b) => Number(b.number) === num);
+                        return (
+                          <motion.button
+                            key={num}
+                            whileTap={{ scale: 0.85 }}
+                            onClick={() => {
+                              setSelectedNumber(num);
+                              setCustomBetAmount(selectedSlot.betAmount || 10);
+                              setBetConfirmOpen(true);
+                            }}
+                            disabled={isDisabled}
+                            className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${isDisabled
                               ? "cursor-not-allowed bg-white/5 text-white/20"
                               : isMyBet
                                 ? "bg-primary/20 text-primary ring-1 ring-primary/40"
                                 : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-                          }`}
-                        >
-                          {String(i).padStart(2, '0')}
-                          {isMyBet && (
-                            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
-                          )}
-                        </motion.button>
-                      );
-                    })}
+                              }`}
+                          >
+                            {String(num).padStart(2, '0')}
+                            {isMyBet && (
+                              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
+                            )}
+                          </motion.button>
+                        );
+                      }
+                    )}
                   </div>
                 </motion.div>
               )}

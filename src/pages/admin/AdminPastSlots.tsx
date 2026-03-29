@@ -25,6 +25,7 @@ type SlotRecord = {
   winningNumber?: number | null;
   isPlaceholder?: boolean;
   windowLabel?: string;
+  numberRange?: { start: number; end: number };
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
@@ -381,6 +382,7 @@ export default function AdminPastSlots() {
                     <ExposureGrid
                       exposure={slotExposure}
                       winningNumber={slot.winningNumber ?? undefined}
+                      numberRange={slot.numberRange || { start: 0, end: 99 }}
                     />
                   ) : (
                     <div className="flex h-10 items-center justify-center">
@@ -502,9 +504,11 @@ export default function AdminPastSlots() {
 function ExposureGrid({
   exposure,
   winningNumber,
+  numberRange,
 }: {
   exposure: Record<string, any>;
   winningNumber?: number;
+  numberRange: { start: number; end: number };
 }) {
   const max = Math.max(
     ...Object.values(exposure).map((v: any) => v.totalAmount || 0),
@@ -513,47 +517,49 @@ function ExposureGrid({
 
   return (
     <div className="grid grid-cols-5 gap-1 min-[420px]:grid-cols-6 sm:grid-cols-10">
-      {Array.from({ length: 100 }, (_, i) => {
-        const data = exposure[i] || { count: 0, totalAmount: 0 };
-        const intensity = data.totalAmount / max;
-        const isWinner = winningNumber === i;
+      {Array.from(
+        { length: numberRange.end - numberRange.start + 1 },
+        (_, i) => {
+          const num = numberRange.start + i;
+          const data = exposure[num] || { count: 0, totalAmount: 0 };
+          const intensity = data.totalAmount / max;
+          const isWinner = winningNumber === num;
 
-        return (
-          <div
-            key={i}
-            title={`#${String(i).padStart(2, '0')}: ${data.count} bets, ${data.totalAmount} coins`}
-            className={`relative flex aspect-square cursor-default flex-col items-center justify-center rounded text-center transition-all ${
-              isWinner
-                ? "bg-primary/20 ring-2 ring-primary"
-                : data.count > 0
-                  ? "bg-red-500/20 hover:bg-red-500/30"
-                  : "bg-white/5"
-            }`}
-            style={
-              data.count > 0 && !isWinner
-                ? { opacity: 0.5 + intensity * 0.5 }
-                : {}
-            }
-          >
-            <span
-              className={`text-[9px] font-bold leading-none ${
-                isWinner
-                  ? "text-primary"
+          return (
+            <div
+              key={num}
+              title={`#${String(num).padStart(2, '0')}: ${data.count} bets, ${data.totalAmount} coins`}
+              className={`relative flex aspect-square cursor-default flex-col items-center justify-center rounded text-center transition-all ${isWinner
+                  ? "bg-primary/20 ring-2 ring-primary"
                   : data.count > 0
-                    ? "text-red-400"
-                    : "text-white/20"
-              }`}
+                    ? "bg-red-500/20 hover:bg-red-500/30"
+                    : "bg-white/5"
+                }`}
+              style={
+                data.count > 0 && !isWinner
+                  ? { opacity: 0.5 + intensity * 0.5 }
+                  : {}
+              }
             >
-              {String(i).padStart(2, '0')}
-            </span>
-            {data.count > 0 && (
-              <span className="mt-0.5 text-[7px] leading-none text-white/40">
-                {data.count}
+              <span
+                className={`text-[9px] font-bold leading-none ${isWinner
+                    ? "text-primary"
+                    : data.count > 0
+                      ? "text-red-400"
+                      : "text-white/20"
+                  }`}
+              >
+                {String(num).padStart(2, '0')}
               </span>
-            )}
-          </div>
-        );
-      })}
+              {data.count > 0 && (
+                <span className="mt-0.5 text-[7px] leading-none text-white/40">
+                  {data.count}
+                </span>
+              )}
+            </div>
+          );
+        }
+      )}
     </div>
   );
 }
