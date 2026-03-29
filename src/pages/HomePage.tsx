@@ -104,61 +104,23 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // const slots = useMemo(() => {
+  //   return allSlots.map((slot) => ({
+  //     ...slot,
+  //     displayLabel: slot.windowLabel,
+  //     isPlaceholder: !!slot.isPlaceholder,
+  //   }));
+  // }, [allSlots]);
+  
   const slots = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const todaySlots = allSlots.filter((slot) => {
-      const slotStart = new Date(slot.startTime);
-      return slotStart >= today && slotStart < tomorrow;
-    });
-
-    const slotsByWindow = todaySlots.reduce((acc: Record<string, any[]>, slot: any) => {
-      const start = new Date(slot.startTime);
-      const end = new Date(slot.endTime);
-      const key = getWindowKeyFromTimes(start, end, false) ?? getWindowKeyFromTimes(start, end, true);
-
-      if (!key) return acc;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(slot);
-      return acc;
-    }, {});
-
-    return FIXED_SLOT_WINDOWS.map((window) => {
-      const windowStart = buildWindowDate(today, window, false);
-      const windowEnd = buildWindowDate(today, window, true);
-      const candidates = slotsByWindow[window.key] || [];
-
-      const slot = candidates
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt || b.createdAt || 0).getTime() -
-            new Date(a.updatedAt || a.createdAt || 0).getTime(),
-        )[0];
-
-      const label = `${window.label} (${formatWindowTime(windowStart)} - ${formatWindowTime(windowEnd)})`;
-
-      if (slot) {
-        return { ...slot, windowLabel: label, isPlaceholder: false };
-      }
-
-      return {
-        _id: `placeholder-${window.key}-${today.toISOString().slice(0, 10)}`,
-        startTime: windowStart.toISOString(),
-        endTime: windowEnd.toISOString(),
-        status: "UPCOMING",
-        betAmount: null,
-        winAmount: null,
-        winningNumber: null,
-        windowLabel: label,
-        isPlaceholder: true,
-      };
-    });
-  }, [allSlots, buildWindowDate, formatWindowTime, getWindowKeyFromTimes]);
+    return [...allSlots]
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+      .map((slot) => ({
+        ...slot,
+        displayLabel: slot.windowLabel,
+        isPlaceholder: !!slot.isPlaceholder,
+      }));
+  }, [allSlots]);
 
   useEffect(() => {
     if (!selectedSlot) return;
