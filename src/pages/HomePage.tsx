@@ -104,61 +104,23 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // const slots = useMemo(() => {
+  //   return allSlots.map((slot) => ({
+  //     ...slot,
+  //     displayLabel: slot.windowLabel,
+  //     isPlaceholder: !!slot.isPlaceholder,
+  //   }));
+  // }, [allSlots]);
+  
   const slots = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const todaySlots = allSlots.filter((slot) => {
-      const slotStart = new Date(slot.startTime);
-      return slotStart >= today && slotStart < tomorrow;
-    });
-
-    const slotsByWindow = todaySlots.reduce((acc: Record<string, any[]>, slot: any) => {
-      const start = new Date(slot.startTime);
-      const end = new Date(slot.endTime);
-      const key = getWindowKeyFromTimes(start, end, false) ?? getWindowKeyFromTimes(start, end, true);
-
-      if (!key) return acc;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(slot);
-      return acc;
-    }, {});
-
-    return FIXED_SLOT_WINDOWS.map((window) => {
-      const windowStart = buildWindowDate(today, window, false);
-      const windowEnd = buildWindowDate(today, window, true);
-      const candidates = slotsByWindow[window.key] || [];
-
-      const slot = candidates
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt || b.createdAt || 0).getTime() -
-            new Date(a.updatedAt || a.createdAt || 0).getTime(),
-        )[0];
-
-      const label = `${window.label} (${formatWindowTime(windowStart)} - ${formatWindowTime(windowEnd)})`;
-
-      if (slot) {
-        return { ...slot, windowLabel: label, isPlaceholder: false };
-      }
-
-      return {
-        _id: `placeholder-${window.key}-${today.toISOString().slice(0, 10)}`,
-        startTime: windowStart.toISOString(),
-        endTime: windowEnd.toISOString(),
-        status: "UPCOMING",
-        betAmount: null,
-        winAmount: null,
-        winningNumber: null,
-        windowLabel: label,
-        isPlaceholder: true,
-      };
-    });
-  }, [allSlots, buildWindowDate, formatWindowTime, getWindowKeyFromTimes]);
+    return [...allSlots]
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+      .map((slot) => ({
+        ...slot,
+        displayLabel: slot.windowLabel,
+        isPlaceholder: !!slot.isPlaceholder,
+      }));
+  }, [allSlots]);
 
   useEffect(() => {
     if (!selectedSlot) return;
@@ -369,34 +331,36 @@ const HomePage = () => {
                   className="mt-4"
                 >
                   <div className="grid grid-cols-10 gap-1.5">
-                    {Array.from({ length: 100 }, (_, i) => {
-                      const isMyBet = activeBets.some((b) => Number(b.number) === i);
-
-                      return (
-                        <motion.button
-                          key={i}
-                          whileTap={{ scale: 0.85 }}
-                          onClick={() => {
-                            setSelectedNumber(i);
-                            setCustomBetAmount(selectedSlot.betAmount || 10);
-                            setBetConfirmOpen(true);
-                          }}
-                          disabled={isDisabled}
-                          className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${
-                            isDisabled
+                    {Array.from(
+                      { length: selectedSlot.numberRange.end - selectedSlot.numberRange.start + 1 },
+                      (_, i) => {
+                        const num = selectedSlot.numberRange.start + i;
+                        const isMyBet = activeBets.some((b) => Number(b.number) === num);
+                        return (
+                          <motion.button
+                            key={num}
+                            whileTap={{ scale: 0.85 }}
+                            onClick={() => {
+                              setSelectedNumber(num);
+                              setCustomBetAmount(selectedSlot.betAmount || 10);
+                              setBetConfirmOpen(true);
+                            }}
+                            disabled={isDisabled}
+                            className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${isDisabled
                               ? "cursor-not-allowed bg-white/5 text-white/20"
                               : isMyBet
                                 ? "bg-primary/20 text-primary ring-1 ring-primary/40"
                                 : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-                          }`}
-                        >
-                          {String(i).padStart(2, '0')}
-                          {isMyBet && (
-                            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
-                          )}
-                        </motion.button>
-                      );
-                    })}
+                              }`}
+                          >
+                            {String(num).padStart(2, '0')}
+                            {isMyBet && (
+                              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
+                            )}
+                          </motion.button>
+                        );
+                      }
+                    )}
                   </div>
                 </motion.div>
               )}

@@ -25,6 +25,7 @@ type SlotRecord = {
   winningNumber?: number | null;
   isPlaceholder?: boolean;
   windowLabel?: string;
+  numberRange?: { start: number; end: number };
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
@@ -300,7 +301,11 @@ export default function AdminSlots() {
                     </button>
                   </div>
                   {slotExposure ? (
-                    <ExposureGrid exposure={slotExposure} winningNumber={slot.winningNumber ?? undefined} />
+                    <ExposureGrid
+                      exposure={slotExposure}
+                      winningNumber={slot.winningNumber ?? undefined}
+                      numberRange={slot.numberRange || { start: 0, end: 99 }}
+                    />
                   ) : (
                     <div className="flex h-10 items-center justify-center">
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -353,60 +358,69 @@ export default function AdminSlots() {
   );
 }
 
-function ExposureGrid({ exposure, winningNumber }: { exposure: Record<string, any>; winningNumber?: number | null }) {
+function ExposureGrid({
+  exposure,
+  winningNumber,
+  numberRange,
+}: {
+  exposure: Record<string, any>;
+  winningNumber?: number | null;
+  numberRange: { start: number; end: number };
+}) {
   const maxAmount = Math.max(...Object.values(exposure).map((v: any) => v.totalAmount || 0), 1);
 
   return (
     <div className="relative z-0 grid grid-cols-5 gap-2 min-[420px]:grid-cols-6 sm:grid-cols-10">
-      {Array.from({ length: 100 }, (_, i) => {
-        const data = exposure[i] || { count: 0, totalAmount: 0 };
-        const isWinner = winningNumber !== undefined && winningNumber !== null && Number(winningNumber) === i;
+      {Array.from(
+        { length: numberRange.end - numberRange.start + 1 },
+        (_, i) => {
+          const num = numberRange.start + i;
+          const data = exposure[num] || { count: 0, totalAmount: 0 };
+          const isWinner = winningNumber !== undefined && winningNumber !== null && Number(winningNumber) === num;
 
-        const riskPercentage = (data.totalAmount / maxAmount) * 100;
-        const isHighRisk = riskPercentage > 80 && data.totalAmount > 0;
-        const isMediumRisk = riskPercentage > 20 && riskPercentage <= 80;
+          const riskPercentage = (data.totalAmount / maxAmount) * 100;
+          const isHighRisk = riskPercentage > 80 && data.totalAmount > 0;
+          const isMediumRisk = riskPercentage > 20 && riskPercentage <= 80;
 
-        let containerClasses = "bg-white/5 text-white/20 border-white/5";
-        let specialIcon = null;
+          let containerClasses = "bg-white/5 text-white/20 border-white/5";
+          let specialIcon = null;
 
-        if (isWinner) {
-          if (isHighRisk) {
-            containerClasses = "bg-gradient-to-t from-red-600 to-amber-400 text-white border-yellow-300 animate-fire ring-2 ring-white/50";
-            specialIcon = <div className="absolute -top-5 text-[25px]">🔥</div>;
-          } else {
-            containerClasses = "bg-primary/40 text-primary border-primary ring-2 ring-primary/50 scale-110 shadow-lg";
-            specialIcon = <Trophy className="absolute -top-2 h-3 w-3 fill-primary stroke-black" />;
+          if (isWinner) {
+            if (isHighRisk) {
+              containerClasses = "bg-gradient-to-t from-red-600 to-amber-400 text-white border-yellow-300 animate-fire ring-2 ring-white/50";
+              specialIcon = <div className="absolute -top-5 text-[25px]">🔥</div>;
+            } else {
+              containerClasses = "bg-primary/40 text-primary border-primary ring-2 ring-primary/50 scale-110 shadow-lg";
+              specialIcon = <Trophy className="absolute -top-2 h-3 w-3 fill-primary stroke-black" />;
+            }
+          } else if (isHighRisk) {
+            containerClasses = "border-red-500 text-red-500 z-10 animate-red-alert ring-1 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+            specialIcon = <div className="absolute -top-2 text-[7px] font-black bg-red-600 text-white px-1 rounded-full">DANGER</div>;
+          } else if (isMediumRisk) {
+            containerClasses = "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]";
+            specialIcon = <div className="absolute -top-2 text-[7px] font-black bg-amber-600 text-white px-1 rounded-full">HIGH</div>;
+          } else if (data.count > 0) {
+            containerClasses = "bg-blue-500/10 text-blue-300 border-blue-500/20";
           }
-        }
-        else if (isHighRisk) {
-          containerClasses = "border-red-500 text-red-500 z-10 animate-red-alert ring-1 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
-          specialIcon = <div className="absolute -top-2 text-[7px] font-black bg-red-600 text-white px-1 rounded-full">DANGER</div>;
-        }
-        else if (isMediumRisk) {
-          containerClasses = "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]";
-          specialIcon = <div className="absolute -top-2 text-[7px] font-black bg-amber-600 text-white px-1 rounded-full">HIGH</div>;
-        }
-        else if (data.count > 0) {
-          containerClasses = "bg-blue-500/10 text-blue-300 border-blue-500/20";
-        }
 
-        return (
-          <div
-            key={i}
-            className={`relative flex aspect-square flex-col items-center justify-center rounded-lg border transition-all duration-300 font-black ${containerClasses}`}
-          >
-            {specialIcon}
-            <span className={`text-[14px] ${isWinner ? 'scale-125' : ''}`}>
-              {String(i).padStart(2, '0')}
-            </span>
-            {data.count > 0 && (
-              <span className={`mt-0.5 text-[11px] ${isWinner || isHighRisk || isMediumRisk ? 'text-white' : 'opacity-60'}`}>
-                {data.totalAmount}
+          return (
+            <div
+              key={num}
+              className={`relative flex aspect-square flex-col items-center justify-center rounded-lg border transition-all duration-300 font-black ${containerClasses}`}
+            >
+              {specialIcon}
+              <span className={`text-[14px] ${isWinner ? 'scale-125' : ''}`}>
+                {String(num).padStart(2, '0')}
               </span>
-            )}
-          </div>
-        );
-      })}
+              {data.count > 0 && (
+                <span className={`mt-0.5 text-[11px] ${isWinner || isHighRisk || isMediumRisk ? 'text-white' : 'opacity-60'}`}>
+                  {data.totalAmount}
+                </span>
+              )}
+            </div>
+          );
+        }
+      )}
     </div>
   );
 }
