@@ -1,6 +1,7 @@
 const API_BASE =
-  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
-// "http://localhost:8001/api";
+  import.meta.env.VITE_API_URL ||
+  //  "https://dhanwarsha.adonservice.in/api";
+  "http://localhost:8001/api";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
   const isFormData =
@@ -35,6 +36,53 @@ function toQueryString(params: Record<string, string | number | undefined>) {
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }
+
+export type TimeBazarResult = {
+  _id: string;
+  gameKey: string;
+  gameName: string;
+  rawNumber: string;
+  openNumber?: string;
+  closeNumber?: string;
+  timeWindow?: string;
+  openTime?: string;
+  closeTime?: string;
+  jodiLink?: string;
+  panelLink?: string;
+  sourceUrl?: string;
+  fetchedAt: string;
+};
+
+export type LiveDrawStatus = "UPCOMING" | "OPEN" | "CLOSED" | "RESULT_DECLARED";
+
+export type LiveDrawInfo = {
+  gameKey: string;
+  gameName: string;
+  startTime: string;
+  endTime: string;
+  status: LiveDrawStatus;
+  betAmount: number;
+  winAmount: number;
+  numberRange: { start: number; end: number };
+  latestResult?: {
+    winningNumber: string;
+    rawNumber?: string;
+    openNumber?: string;
+    closeNumber?: string;
+    timeWindow?: string;
+    fetchedAt: string;
+  };
+};
+
+export type LiveDrawBet = {
+  _id: string;
+  gameKey: string;
+  number: string;
+  amount: number;
+  status: string;
+  payout?: number;
+  createdAt: string;
+};
 
 export const api = {
   // Auth
@@ -80,6 +128,25 @@ export const api = {
     }),
   getSlotExposure: (slotId: string) =>
     request<any>(`/slots/${slotId}/exposure`),
+
+  // Time Bazar
+  getTimeBazarLatest: () => request<TimeBazarResult[]>("/time-bazar/latest"),
+  getTimeBazarHistory: (gameKey?: string, limit = 8) =>
+    request<TimeBazarResult[]>(
+      `/time-bazar/history${toQueryString({ limit, game: gameKey })}`,
+    ),
+
+  // Live draws
+  getLiveDraws: () => request<LiveDrawInfo[]>("/live-draws"),
+  placeLiveDrawBet: (gameKey: string, number: string, amount: number) =>
+    request<any>(`/live-draws/${gameKey}/bets`, {
+      method: "POST",
+      body: JSON.stringify({ number, amount }),
+    }),
+  getMyLiveDrawBets: (gameKey?: string) =>
+    request<LiveDrawBet[]>(
+      `/live-draws/bets/my${toQueryString({ game: gameKey })}`,
+    ),
 
   // Bets
   placeBet: (slotId: string, number: string, amount: number) =>

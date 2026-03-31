@@ -1,10 +1,11 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Wallet, Trophy, User, ShieldCheck } from 'lucide-react';
+import { Home, Wallet, Trophy, User, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { motion } from 'framer-motion';
 
 const baseTabs = [
   { path: '/', icon: Home, label: 'Home' },
+  { path: '/time-bazar', icon: Sparkles, label: 'Time Bazar' },
   { path: '/wallet', icon: Wallet, label: 'Wallet' },
   { path: '/bets', icon: Trophy, label: 'Bets' },
   { path: '/profile', icon: User, label: 'Profile' },

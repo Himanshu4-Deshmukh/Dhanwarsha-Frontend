@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import BottomNav from "@/components/BottomNav";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
+import TimeBazarPage from "./pages/TimeBazarPage";
 import WalletPage from "./pages/WalletPage";
 import BetsPage from "./pages/BetsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -49,11 +50,12 @@ function AppLayout() {
   return (
     <div className="mx-auto min-h-screen max-w-lg bg-background">
       <ProtectedRoute>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/bets" element={<BetsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/time-bazar" element={<TimeBazarPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/bets" element={<BetsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />
