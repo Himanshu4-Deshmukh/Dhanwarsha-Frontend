@@ -3,7 +3,7 @@
   "name": "DhanWarsha - Number Betting",
   "short_name": "DhanWarsha",
   "description": "Place your bets on numbers 0-99",
-  "start_url": "/",
+  "start_url": "/auth",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
