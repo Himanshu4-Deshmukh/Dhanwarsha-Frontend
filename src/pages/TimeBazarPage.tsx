@@ -5,10 +5,15 @@ import { api, LiveDrawBet, LiveDrawInfo, TimeBazarResult } from "@/lib/api";
 
 // ── Original constants (unchanged) ──────────────────────────────────────────
 
-const GAME_TYPES: Array<{ key: "open" | "close"; label: string }> = [
+// const GAME_TYPES: Array<{ key: "open" | "close"; label: string }> = [
+//   { key: "open", label: "Open" },
+//   { key: "close", label: "Close" },
+// ];
+const GAME_TYPES = [
   { key: "open", label: "Open" },
   { key: "close", label: "Close" },
-];
+  { key: "jodi", label: "Jodi" },
+] as const;
 
 const formatTimestamp = (value?: string) => {
   if (!value) return "--";
@@ -23,12 +28,12 @@ const formatTimestamp = (value?: string) => {
   }).format(date);
 };
 
-const PLAY_OPTIONS = [
-  { key: "single-digit", label: "Single Digit" },
-  { key: "single-patti", label: "Single Patti" },
-  { key: "double-patti", label: "Double Patti" },
-  { key: "triple-patti", label: "Triple Patti" },
-];
+// const PLAY_OPTIONS = [
+//   { key: "single-digit", label: "Single Digit" },
+//   { key: "single-patti", label: "Single Patti" },
+//   { key: "double-patti", label: "Double Patti" },
+//   { key: "triple-patti", label: "Triple Patti" },
+// ];
 
 // ── Modal stage (navigation only) ────────────────────────────────────────────
 
@@ -42,8 +47,8 @@ const TimeBazarPage = () => {
   const [history, setHistory] = useState<TimeBazarResult[]>([]);
   const [liveDraws, setLiveDraws] = useState<LiveDrawInfo[]>([]);
   const [selectedGameKey, setSelectedGameKey] = useState<string | null>(null);
-  const [gameType, setGameType] = useState<"open" | "close">("open");
-  const [activePlay, setActivePlay] = useState(PLAY_OPTIONS[0].key);
+  const [gameType, setGameType] = useState<"open" | "close" | "jodi">("open");
+  // const [activePlay, setActivePlay] = useState(PLAY_OPTIONS[0].key);
   const [liveBets, setLiveBets] = useState<LiveDrawBet[]>([]);
   const [digitInputs, setDigitInputs] = useState<Record<string, string>>({});
   const [pattiNumber, setPattiNumber] = useState("");
@@ -61,6 +66,12 @@ const TimeBazarPage = () => {
   const [modalStage, setModalStage] = useState<ModalStage>("window");
   const [isPlayModalOpen, setIsPlayModalOpen] = useState(false);
   const lastOpenedGameKeyRef = useRef<string | null>(null);
+
+  const isJodi = gameType === "jodi";
+
+  const digitRange = isJodi
+    ? Array.from({ length: 100 }, (_, i) => i)
+    : Array.from({ length: 10 }, (_, i) => i);
 
   // All original data-loading hooks (unchanged)
 
@@ -130,25 +141,25 @@ const TimeBazarPage = () => {
     loadLiveBets();
   }, [loadLiveBets]);
 
-  const handleSelectPlayType = useCallback(
-    (playKey: string) => {
-      if (activePlay === playKey) return;
-      setActivePlay(playKey);
-      setDigitInputs({});
-      setPattiNumber("");
-      setPattiPoints("");
-      setBidEntries([]);
-      setSelectedSingleDigit(0);
-    },
-    [activePlay],
-  );
+  // const handleSelectPlayType = useCallback(
+  //   (playKey: string) => {
+  //     if (activePlay === playKey) return;
+  //     setActivePlay(playKey);
+  //     setDigitInputs({});
+  //     setPattiNumber("");
+  //     setPattiPoints("");
+  //     setBidEntries([]);
+  //     setSelectedSingleDigit(0);
+  //   },
+  //   [activePlay],
+  // );
 
   const openPlayModal = (gameKey: string) => {
     const isNewGame = lastOpenedGameKeyRef.current !== gameKey;
     if (isNewGame) {
       setModalStage("window");
       setGameType("open");
-      setActivePlay(PLAY_OPTIONS[0].key);
+      // setActivePlay(PLAY_OPTIONS[0].key);
       setDigitInputs({});
       setPattiNumber("");
       setPattiPoints("");
@@ -264,6 +275,7 @@ const TimeBazarPage = () => {
           selectedDraw.gameKey,
           entry.number,
           entry.points,
+          gameType
         );
       }
       toast.success("Bets placed");
@@ -358,8 +370,8 @@ const TimeBazarPage = () => {
     selectedDraw?.status ?? selectedResult?.timeWindow ?? "Running for today";
   const modalOpenTime = selectedResult?.openTime ?? selectedDraw?.startTime;
   const modalCloseTime = selectedResult?.closeTime ?? selectedDraw?.endTime;
-  const activePlayLabel =
-    PLAY_OPTIONS.find((option) => option.key === activePlay)?.label ?? "";
+  // const activePlayLabel =
+  //   PLAY_OPTIONS.find((option) => option.key === activePlay)?.label ?? "";
   const selectedGameTypeLabel =
     GAME_TYPES.find((type) => type.key === gameType)?.label ?? "";
   const showPlayModal = isPlayModalOpen && (selectedDraw || selectedResult);
@@ -511,7 +523,7 @@ const TimeBazarPage = () => {
                 </h2>
                 {modalStage === "betting" && (
                   <p className="text-xs text-white/50">
-                    {selectedGameTypeLabel} · {activePlayLabel}
+                    {selectedGameTypeLabel}
                   </p>
                 )}
               </div>
@@ -578,7 +590,7 @@ const TimeBazarPage = () => {
                     {modalStatusLabel}
                   </p>
                 </div>
-                <div className="space-y-3">
+                {/* <div className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.4em] text-white/50">
                     Play options
                   </p>
@@ -598,7 +610,7 @@ const TimeBazarPage = () => {
                       </button>
                     ))}
                   </div>
-                </div>
+                </div> */}
                 <div className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
                   {/* Game type toggle */}
                   <div className="mb-4 flex items-center justify-between">
@@ -621,9 +633,74 @@ const TimeBazarPage = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                          Choose number
+                        </p>
+                        <span className="text-xs text-white/50">
+                          {gameType === "jodi" ? "00 - 99" : "0 - 9"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-5 gap-2 max-h-60 overflow-y-auto">
+                        {digitRange.map((num) => {
+                          const value =
+                            gameType === "jodi"
+                              ? String(num).padStart(2, "0")
+                              : String(num);
+
+                          const active = selectedSingleDigit === num;
+
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setSelectedSingleDigit(num)}
+                              className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${active
+                                  ? "border-primary bg-primary/20 text-primary"
+                                  : "border-white/20 text-white/60 hover:border-white hover:text-white"
+                                }`}
+                            >
+                              {value}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[hsl(220,20%,6%)] px-4 py-3">
+                        <span className="text-xl font-bold text-white">
+                          {gameType === "jodi"
+                            ? String(selectedSingleDigit).padStart(2, "0")
+                            : selectedSingleDigit}
+                        </span>
+
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="Enter amount"
+                          value={digitInputs[selectedSingleDigit] ?? ""}
+                          onChange={(event) =>
+                            setDigitInputs((prev) => ({
+                              ...prev,
+                              [selectedSingleDigit]: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-primary"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddDigit(selectedSingleDigit)}
+                          className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
                   {/* Single digit inputs */}
-                  {activePlay === "single-digit" && (
+                  {/* {activePlay === "single-digit" && (
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -637,7 +714,10 @@ const TimeBazarPage = () => {
                         </div>
                         <div className="grid grid-cols-5 gap-2">
                           {Array.from({ length: 10 }, (_, index) => {
-                            const value = String(index).padStart(2, "0");
+                            const value =
+                              gameType === "jodi"
+                                ? String(index).padStart(2, "0")
+                                : String(index);
                             const active = selectedSingleDigit === index;
                             return (
                               <button
@@ -682,9 +762,9 @@ const TimeBazarPage = () => {
                         </button>
                       </div>
                     </div>
-                  )}
+                  )} */}
                   {/* Patti inputs */}
-                  {activePlay !== "single-digit" && (
+                  {/* {activePlay !== "single-digit" && (
                     <div className="space-y-3">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -761,7 +841,7 @@ const TimeBazarPage = () => {
                         )?.label ?? "Patti"}
                       </button>
                     </div>
-                  )}
+                  )} */}
                   {/* Pending bids */}
                   {bidEntries.length > 0 && (
                     <div className="mt-4 rounded-2xl border border-white/10 bg-[hsl(220,20%,8%)] p-3 text-sm text-white/60">
