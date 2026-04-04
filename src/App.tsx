@@ -25,24 +25,26 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) return (
-    <div className="flex h-screen items-center justify-center bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) return (
-    <div className="flex h-screen items-center justify-center bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   if (!user) return <Navigate to="/auth" replace />;
-  if (user.role !== 'ADMIN') return <Navigate to="/" replace />;
+  if (user.role !== "ADMIN") return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -50,12 +52,12 @@ function AppLayout() {
   return (
     <div className="mx-auto min-h-screen max-w-lg bg-background">
       <ProtectedRoute>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/time-bazar" element={<TimeBazarPage />} />
-        <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/bets" element={<BetsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/time-bazar" element={<TimeBazarPage />} />
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/bets" element={<BetsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { api, LiveDrawBet, LiveDrawInfo, TimeBazarResult } from "@/lib/api";
@@ -28,9 +28,9 @@ const PLAY_OPTIONS = [
   { key: "triple-patti", label: "Triple Patti" },
 ];
 
-// ── Screen type (navigation only) ────────────────────────────────────────────
+// ── Modal stage (navigation only) ────────────────────────────────────────────
 
-type Screen = "home" | "play-types" | "betting";
+type ModalStage = "window" | "betting";
 
 // ── TimeBazarPage ─────────────────────────────────────────────────────────────
 
@@ -46,6 +46,7 @@ const TimeBazarPage = () => {
   const [digitInputs, setDigitInputs] = useState<Record<string, string>>({});
   const [pattiNumber, setPattiNumber] = useState("");
   const [pattiPoints, setPattiPoints] = useState("");
+  const [selectedSingleDigit, setSelectedSingleDigit] = useState(0);
   const [bidEntries, setBidEntries] = useState<
     { type: string; label: string; number: string; points: number }[]
   >([]);
@@ -55,8 +56,9 @@ const TimeBazarPage = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [betsLoading, setBetsLoading] = useState(false);
 
-  // Navigation state
-  const [screen, setScreen] = useState<Screen>("home");
+  const [modalStage, setModalStage] = useState<ModalStage>("window");
+  const [isPlayModalOpen, setIsPlayModalOpen] = useState(false);
+  const lastOpenedGameKeyRef = useRef<string | null>(null);
 
   // All original data-loading hooks (unchanged)
 
@@ -125,6 +127,40 @@ const TimeBazarPage = () => {
   useEffect(() => {
     loadLiveBets();
   }, [loadLiveBets]);
+
+  const handleSelectPlayType = useCallback(
+    (playKey: string) => {
+      if (activePlay === playKey) return;
+      setActivePlay(playKey);
+      setDigitInputs({});
+      setPattiNumber("");
+      setPattiPoints("");
+      setBidEntries([]);
+      setSelectedSingleDigit(0);
+    },
+    [activePlay],
+  );
+
+  const openPlayModal = (gameKey: string) => {
+    const isNewGame = lastOpenedGameKeyRef.current !== gameKey;
+    if (isNewGame) {
+      setModalStage("window");
+      setGameType("open");
+      setActivePlay(PLAY_OPTIONS[0].key);
+      setDigitInputs({});
+      setPattiNumber("");
+      setPattiPoints("");
+      setBidEntries([]);
+      setSelectedSingleDigit(0);
+    }
+    setSelectedGameKey(gameKey);
+    setIsPlayModalOpen(true);
+    lastOpenedGameKeyRef.current = gameKey;
+  };
+
+  const closePlayModal = useCallback(() => {
+    setIsPlayModalOpen(false);
+  }, []);
 
   // All original bid helpers (unchanged)
 
@@ -203,6 +239,15 @@ const TimeBazarPage = () => {
     if (!activeKey) return null;
     return latestResults.find((item) => item.gameKey === activeKey) ?? null;
   }, [latestResults, selectedGameKey, selectedDraw]);
+
+  const handleCancelBets = useCallback(() => {
+    setBidEntries([]);
+    setDigitInputs({});
+    setPattiNumber("");
+    setPattiPoints("");
+    setModalStage("window");
+    setSelectedSingleDigit(0);
+  }, []);
 
   const handleSubmitEntries = useCallback(async () => {
     if (!selectedDraw) return;
@@ -283,6 +328,20 @@ const TimeBazarPage = () => {
     ? `${digits[digits.length - 1]}${digits[digits.length - 1]}`
     : "--";
 
+  const numberRange = useMemo(() => {
+    if (selectedDraw?.numberRange) {
+      return selectedDraw.numberRange;
+    }
+    return { start: 0, end: 99 };
+  }, [selectedDraw?.numberRange?.start, selectedDraw?.numberRange?.end]);
+
+  const numberOptions = useMemo(() => {
+    const start = numberRange.start;
+    const end = numberRange.end;
+    if (end < start) return [];
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [numberRange.start, numberRange.end]);
+
   const hasLinks = Boolean(
     selectedResult?.jodiLink || selectedResult?.panelLink,
   );
@@ -291,6 +350,17 @@ const TimeBazarPage = () => {
     selectedResult?.fetchedAt ??
     selectedDraw?.latestResult?.fetchedAt ??
     selectedDraw?.startTime;
+  const modalGameName =
+    selectedDraw?.gameName ?? selectedResult?.gameName ?? "Time Bazar";
+  const modalStatusLabel =
+    selectedDraw?.status ?? selectedResult?.timeWindow ?? "Running for today";
+  const modalOpenTime = selectedResult?.openTime ?? selectedDraw?.startTime;
+  const modalCloseTime = selectedResult?.closeTime ?? selectedDraw?.endTime;
+  const activePlayLabel =
+    PLAY_OPTIONS.find((option) => option.key === activePlay)?.label ?? "";
+  const selectedGameTypeLabel =
+    GAME_TYPES.find((type) => type.key === gameType)?.label ?? "";
+  const showPlayModal = isPlayModalOpen && (selectedDraw || selectedResult);
 
   // ── Loading ────────────────────────────────────────────────────────────────
 
@@ -313,326 +383,450 @@ const TimeBazarPage = () => {
     );
   }
 
-  // ── Screen: Play Type Selection ────────────────────────────────────────────
-
-  if (screen === "play-types") {
-    return (
-      <div className="space-y-5 px-4 pb-28 pt-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setScreen("home")}
-            className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white/70"
-          >
-            ← Back
-          </button>
-          <h1 className="text-xl font-bold text-white">
-            {selectedDraw.gameName}
-          </h1>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {PLAY_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => {
-                setActivePlay(option.key);
-                setScreen("betting");
-              }}
-              className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-6 text-center text-sm font-semibold text-white transition hover:border-primary hover:bg-primary/10"
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Screen: Betting ────────────────────────────────────────────────────────
-
-  if (screen === "betting") {
-    return (
-      <div className="space-y-5 px-4 pb-28 pt-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setScreen("play-types")}
-            className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white/70"
-          >
-            ← Back
-          </button>
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-              {selectedDraw.gameName}
-            </p>
-            <h1 className="text-xl font-bold text-white">
-              {PLAY_OPTIONS.find((o) => o.key === activePlay)?.label}
-            </h1>
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-          {/* Game type toggle */}
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm font-semibold text-white">Game type</p>
-            <div className="flex gap-2">
-              {GAME_TYPES.map((type) => (
-                <button
-                  key={type.key}
-                  type="button"
-                  onClick={() => setGameType(type.key)}
-                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
-                    gameType === type.key
-                      ? "border-primary bg-primary/20 text-primary"
-                      : "border-white/20 text-white/60"
-                  }`}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Single digit inputs */}
-          {activePlay === "single-digit" && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {Array.from({ length: 10 }, (_, index) => index).map((digit) => (
-                <div
-                  key={digit}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-[hsl(220,20%,6%)] px-3 py-3"
-                >
-                  <span className="text-lg font-bold text-white">{digit}</span>
-                  <input
-                    type="number"
-                    min={0}
-                    placeholder="Enter amount"
-                    value={digitInputs[digit] ?? ""}
-                    onChange={(event) =>
-                      setDigitInputs((prev) => ({
-                        ...prev,
-                        [digit]: event.target.value,
-                      }))
-                    }
-                    className="w-1/2 rounded-lg border border-white/10 bg-[#0f1620] px-2 py-1 text-sm font-semibold text-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddDigit(digit)}
-                    className="ml-2 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
-                  >
-                    Add
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Patti inputs */}
-          {activePlay !== "single-digit" && (
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold uppercase text-white/50">
-                Enter Number
-                <input
-                  type="text"
-                  maxLength={2}
-                  value={pattiNumber}
-                  onChange={(event) =>
-                    setPattiNumber(event.target.value.replace(/[^0-9]/g, ""))
-                  }
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-base font-semibold text-white outline-none focus:border-primary"
-                />
-              </label>
-              <label className="block text-xs font-semibold uppercase text-white/50">
-                Enter Points
-                <input
-                  type="number"
-                  min={0}
-                  value={pattiPoints}
-                  onChange={(event) => setPattiPoints(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-base font-semibold text-white outline-none focus:border-primary"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() =>
-                  handleAddPatti(
-                    PLAY_OPTIONS.find((option) => option.key === activePlay)
-                      ?.label ?? "Patti",
-                  )
-                }
-                className="w-full rounded-2xl border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-4 py-2 text-sm font-semibold text-white"
-              >
-                Add{" "}
-                {PLAY_OPTIONS.find((option) => option.key === activePlay)
-                  ?.label ?? "Patti"}
-              </button>
-            </div>
-          )}
-
-          {/* Pending bids */}
-          {bidEntries.length > 0 && (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-[hsl(220,20%,8%)] p-3 text-sm text-white/60">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">
-                Pending bids
-              </p>
-              <div className="mt-2 space-y-2">
-                {bidEntries.map((entry, idx) => (
-                  <div
-                    key={`${entry.number}-${idx}`}
-                    className="flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="text-white">{entry.label}</p>
-                      <p className="text-xs text-white/50">{entry.type}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-white">
-                      {entry.points}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Submit bar */}
-        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[hsl(220,20%,8%)] p-4 text-sm text-white">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">
-              Total bids
-            </p>
-            <p className="text-lg font-bold text-white">{totalBids}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">
-              Total points
-            </p>
-            <p className="text-lg font-bold text-white">{totalPoints}</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleSubmitEntries}
-            disabled={!bidEntries.length || placingLiveBet}
-            className="rounded-2xl border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-5 py-2 text-xs font-semibold text-white transition disabled:opacity-40"
-          >
-            {placingLiveBet ? "Submitting..." : "Submit"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // ── Screen: Home (game cards) ─────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 px-4 pb-28 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-            Live draws
-          </p>
-          <h1 className="text-2xl font-bold text-white">Time Bazar</h1>
+    <>
+      <div className="space-y-4 px-4 pb-28 pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+              Live draws
+            </p>
+            <h1 className="text-2xl font-bold text-white">Time Bazar</h1>
+          </div>
+          <Sparkles className="h-8 w-8 rounded-2xl bg-white/10 p-1 text-white" />
         </div>
-        <Sparkles className="h-8 w-8 rounded-2xl bg-white/10 p-1 text-white" />
-      </div>
 
-      {liveDraws.map((draw) => {
-        const result = latestResults.find((r) => r.gameKey === draw.gameKey);
-        const rawNumber =
-          result?.rawNumber ?? draw.latestResult?.rawNumber ?? "***-**-***";
-        const openTime = result?.openTime ?? draw.startTime ?? "--";
-        const closeTime = result?.closeTime ?? "--";
-        const status = draw.status ?? "RUNNING FOR TODAY";
+        {liveDraws.map((draw) => {
+          const result = latestResults.find((r) => r.gameKey === draw.gameKey);
+          const rawNumber =
+            result?.rawNumber ?? draw.latestResult?.rawNumber ?? "***-**-***";
+          const openTime = result?.openTime ?? draw.startTime ?? "--";
+          const closeTime = result?.closeTime ?? "--";
+          const status = draw.status ?? "RUNNING FOR TODAY";
 
-        return (
-          <div
-            key={draw.gameKey}
-            className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-                  {status}
-                </p>
-                <h2 className="text-xl font-bold text-white">
-                  {draw.gameName}
-                </h2>
-                <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
-                  {rawNumber}
-                </p>
+          return (
+            <div
+              key={draw.gameKey}
+              className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                    {status}
+                  </p>
+                  <h2 className="text-xl font-bold text-white">
+                    {draw.gameName}
+                  </h2>
+                  <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
+                    {rawNumber}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPlayModal(draw.gameKey)}
+                  className="flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white"
+                >
+                  <span className="text-xs">▶</span> Play
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedGameKey(draw.gameKey);
-                  setScreen("play-types");
-                }}
-                className="flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white"
-              >
-                <span className="text-xs">▶</span> Play
-              </button>
-            </div>
-            <div className="mt-4 flex gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
-              <span>
-                OPEN BIDS: <span className="text-white/80">{openTime}</span>
-              </span>
-              <span className="text-white/20">|</span>
-              <span>
-                CLOSE BIDS: <span className="text-white/80">{closeTime}</span>
-              </span>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Fallback when no liveDraws */}
-      {!liveDraws.length &&
-        latestResults.map((result) => (
-          <div
-            key={result._id}
-            className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-                  {result.timeWindow ?? "Running for today"}
-                </p>
-                <h2 className="text-xl font-bold text-white">
-                  {result.gameName}
-                </h2>
-                <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
-                  {result.rawNumber ?? "***-**-***"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedGameKey(result.gameKey);
-                  setScreen("play-types");
-                }}
-                className="flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white"
-              >
-                <span className="text-xs">▶</span> Play
-              </button>
-            </div>
-            <div className="mt-4 flex gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
-              <span>
-                OPEN BIDS:{" "}
-                <span className="text-white/80">{result.openTime ?? "--"}</span>
-              </span>
-              <span className="text-white/20">|</span>
-              <span>
-                CLOSE BIDS:{" "}
-                <span className="text-white/80">
-                  {result.closeTime ?? "--"}
+              <div className="mt-4 flex gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
+                <span>
+                  OPEN BIDS: <span className="text-white/80">{openTime}</span>
                 </span>
-              </span>
+                <span className="text-white/20">|</span>
+                <span>
+                  CLOSE BIDS: <span className="text-white/80">{closeTime}</span>
+                </span>
+              </div>
             </div>
+          );
+        })}
+
+        {/* Fallback when no liveDraws */}
+        {!liveDraws.length &&
+          latestResults.map((result) => (
+            <div
+              key={result._id}
+              className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                    {result.timeWindow ?? "Running for today"}
+                  </p>
+                  <h2 className="text-xl font-bold text-white">
+                    {result.gameName}
+                  </h2>
+                  <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
+                    {result.rawNumber ?? "***-**-***"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPlayModal(result.gameKey)}
+                  className="flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white"
+                >
+                  <span className="text-xs">▶</span> Play
+                </button>
+              </div>
+              <div className="mt-4 flex gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
+                <span>
+                  OPEN BIDS:{" "}
+                  <span className="text-white/80">
+                    {result.openTime ?? "--"}
+                  </span>
+                </span>
+                <span className="text-white/20">|</span>
+                <span>
+                  CLOSE BIDS:{" "}
+                  <span className="text-white/80">
+                    {result.closeTime ?? "--"}
+                  </span>
+                </span>
+              </div>
+            </div>
+          ))}
+      </div>
+      {showPlayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:items-center">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={closePlayModal}
+          />
+          <div
+            className="relative w-full max-w-3xl overflow-hidden rounded-[32px] border border-white/10 bg-[hsl(220,20%,10%)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.8)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                  {modalStage === "window" ? "Time window" : "Bidding"}
+                </p>
+                <h2 className="text-2xl font-bold text-white">
+                  {modalGameName}
+                </h2>
+                {modalStage === "betting" && (
+                  <p className="text-xs text-white/50">
+                    {selectedGameTypeLabel} · {activePlayLabel}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={closePlayModal}
+                className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/70"
+              >
+                Close
+              </button>
+            </div>
+            {modalStage === "window" ? (
+              <div className="mt-6 space-y-3">
+                <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                  Choose a window
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {GAME_TYPES.map((type) => {
+                    const time =
+                      type.key === "open" ? modalOpenTime : modalCloseTime;
+                    return (
+                      <button
+                        key={type.key}
+                        type="button"
+                        onClick={() => {
+                          setGameType(type.key);
+                          setModalStage("betting");
+                        }}
+                        className={`rounded-3xl border p-5 text-left transition ${
+                          gameType === type.key
+                            ? "border-primary bg-primary/10 text-white"
+                            : "border-white/10 text-white/70"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold">
+                            {type.label}
+                          </span>
+                          <span className="text-xs text-white/60">
+                            {formatTimestamp(time)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/50">
+                          {type.key === "open"
+                            ? "Open bids window"
+                            : "Close bids window"}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setModalStage("window")}
+                    className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white/70"
+                  >
+                    ← Back
+                  </button>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+                    {modalStatusLabel}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                    Play options
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {PLAY_OPTIONS.map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => handleSelectPlayType(option.key)}
+                        className={`rounded-3xl border px-4 py-3 text-sm font-semibold transition ${
+                          activePlay === option.key
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-white/10 text-white/80"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+                  {/* Game type toggle */}
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-white">
+                      Game type
+                    </p>
+                    <div className="flex gap-2">
+                      {GAME_TYPES.map((type) => (
+                        <button
+                          key={type.key}
+                          type="button"
+                          onClick={() => setGameType(type.key)}
+                          className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                            gameType === type.key
+                              ? "border-primary bg-primary/20 text-primary"
+                              : "border-white/20 text-white/60"
+                          }`}
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Single digit inputs */}
+                  {activePlay === "single-digit" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                            Choose digit
+                          </p>
+                          <span className="text-xs text-white/50">
+                            Selected{" "}
+                            {String(selectedSingleDigit).padStart(2, "0")}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-5 gap-2">
+                          {Array.from({ length: 10 }, (_, index) => {
+                            const value = String(index).padStart(2, "0");
+                            const active = selectedSingleDigit === index;
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() => setSelectedSingleDigit(index)}
+                                className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
+                                  active
+                                    ? "border-primary bg-primary/20 text-primary"
+                                    : "border-white/20 text-white/60 hover:border-white/60 hover:text-white"
+                                }`}
+                              >
+                                {value}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[hsl(220,20%,6%)] px-4 py-3">
+                        <span className="text-2xl font-bold text-white">
+                          {String(selectedSingleDigit).padStart(2, "0")}
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="Enter amount"
+                          value={digitInputs[selectedSingleDigit] ?? ""}
+                          onChange={(event) =>
+                            setDigitInputs((prev) => ({
+                              ...prev,
+                              [selectedSingleDigit]: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddDigit(selectedSingleDigit)}
+                          className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {/* Patti inputs */}
+                  {activePlay !== "single-digit" && (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                            Choose number
+                          </p>
+                          <span className="text-xs text-white/50">
+                            Range {numberRange.start}-{numberRange.end}
+                          </span>
+                        </div>
+                        <div className="max-h-44 overflow-y-auto rounded-2xl border border-white/10 bg-[hsl(220,20%,6%)] p-2">
+                          <div className="grid grid-cols-10 gap-2">
+                            {numberOptions.map((num) => {
+                              const value = String(num).padStart(2, "0");
+                              const selected = value === pattiNumber;
+                              return (
+                                <button
+                                  key={`${value}-${num}`}
+                                  type="button"
+                                  onClick={() => setPattiNumber(value)}
+                                  className={`rounded-lg border px-2 py-1 text-xs font-semibold transition ${
+                                    selected
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "border-white/10 text-white/60 hover:border-white/40 hover:text-white"
+                                  }`}
+                                >
+                                  {value}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <label className="block text-xs font-semibold uppercase text-white/50">
+                        Enter Number
+                        <input
+                          type="text"
+                          maxLength={2}
+                          value={pattiNumber}
+                          onChange={(event) =>
+                            setPattiNumber(
+                              event.target.value.replace(/[^0-9]/g, ""),
+                            )
+                          }
+                          className="mt-1 w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-base font-semibold text-white outline-none focus:border-primary"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold uppercase text-white/50">
+                        Enter Points
+                        <input
+                          type="number"
+                          min={0}
+                          value={pattiPoints}
+                          onChange={(event) =>
+                            setPattiPoints(event.target.value)
+                          }
+                          className="mt-1 w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-base font-semibold text-white outline-none focus:border-primary"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleAddPatti(
+                            PLAY_OPTIONS.find(
+                              (option) => option.key === activePlay,
+                            )?.label ?? "Patti",
+                          )
+                        }
+                        className="w-full rounded-2xl border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        Add{" "}
+                        {PLAY_OPTIONS.find(
+                          (option) => option.key === activePlay,
+                        )?.label ?? "Patti"}
+                      </button>
+                    </div>
+                  )}
+                  {/* Pending bids */}
+                  {bidEntries.length > 0 && (
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-[hsl(220,20%,8%)] p-3 text-sm text-white/60">
+                      <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+                        Pending bids
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        {bidEntries.map((entry, idx) => (
+                          <div
+                            key={`${entry.number}-${idx}`}
+                            className="flex items-center justify-between"
+                          >
+                            <div>
+                              <p className="text-white">{entry.label}</p>
+                              <p className="text-xs text-white/50">
+                                {entry.type}
+                              </p>
+                            </div>
+                            <span className="text-sm font-semibold text-white">
+                              {entry.points}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Submit bar */}
+                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[hsl(220,20%,8%)] p-4 text-sm text-white">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+                      Total bids
+                    </p>
+                    <p className="text-lg font-bold text-white">{totalBids}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+                      Total points
+                    </p>
+                    <p className="text-lg font-bold text-white">
+                      {totalPoints}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCancelBets}
+                      className="rounded-2xl border border-white/20 px-5 py-2 text-xs font-semibold text-white transition hover:border-white/40"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmitEntries}
+                      disabled={!bidEntries.length || placingLiveBet}
+                      className="rounded-2xl border border-white/20 bg-gradient-to-r from-primary to-emerald-500 px-5 py-2 text-xs font-semibold text-white transition disabled:opacity-40"
+                    >
+                      {placingLiveBet ? "Submitting..." : "Submit"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 
