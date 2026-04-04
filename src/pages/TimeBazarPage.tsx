@@ -10,16 +10,18 @@ const GAME_TYPES: Array<{ key: "open" | "close"; label: string }> = [
   { key: "close", label: "Close" },
 ];
 
-const formatTimestamp = (value?: string) =>
-  value
-    ? new Intl.DateTimeFormat("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }).format(new Date(value))
-    : "--";
+const formatTimestamp = (value?: string) => {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "--";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+};
 
 const PLAY_OPTIONS = [
   { key: "single-digit", label: "Single Digit" },
