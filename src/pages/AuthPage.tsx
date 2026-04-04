@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2, Dice1 } from "lucide-react";
 
@@ -174,6 +174,15 @@ const AuthPage = () => {
               <span className="font-mono text-primary">admin@example.com</span>
             </p>
           )}
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/install"
+              className="text-xs font-medium text-primary transition-opacity hover:opacity-80"
+            >
+              Install the app without logging in
+            </Link>
+          </div>
         </div>
       </motion.div>
     </div>

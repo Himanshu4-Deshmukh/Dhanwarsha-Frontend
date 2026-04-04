@@ -10,6 +10,7 @@ import TimeBazarPage from "./pages/TimeBazarPage";
 import WalletPage from "./pages/WalletPage";
 import BetsPage from "./pages/BetsPage";
 import ProfilePage from "./pages/ProfilePage";
+import InstallPage from "./pages/InstallPage";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -74,6 +75,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/install" element={<InstallPage />} />
             <Route
               path="/admin/*"
               element={
