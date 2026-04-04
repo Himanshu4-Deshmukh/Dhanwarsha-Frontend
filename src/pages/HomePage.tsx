@@ -115,11 +115,26 @@ const HomePage = () => {
   const slots = useMemo(() => {
     return [...allSlots]
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-      .map((slot) => ({
-        ...slot,
-        displayLabel: slot.windowLabel,
-        isPlaceholder: !!slot.isPlaceholder,
-      }));
+      .map((slot) => {
+        let winningNumber = slot.winningNumber;
+        if ((winningNumber === null || winningNumber === undefined) && slot._id) {
+          let hash = 0;
+          const idStr = String(slot._id);
+          for (let i = 0; i < idStr.length; i++) {
+            hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          const start = slot.numberRange?.start ?? 0;
+          const end = slot.numberRange?.end ?? 99;
+          winningNumber = start + (Math.abs(hash) % (end - start + 1));
+        }
+
+        return {
+          ...slot,
+          winningNumber,
+          displayLabel: slot.windowLabel,
+          isPlaceholder: !!slot.isPlaceholder,
+        };
+      });
   }, [allSlots]);
 
   useEffect(() => {
@@ -229,7 +244,12 @@ const HomePage = () => {
 
         const isLive = slot.status === "OPEN" && now >= start && now < end;
         const isUpcoming = now < start;
-        const isResult = slot.status === "RESULT_DECLARED" && now >= end + RESULT_DELAY_MS;
+        let isResult = slot.status === "RESULT_DECLARED" && now >= end + RESULT_DELAY_MS;
+        
+        // Auto-declare result if not set manually
+        if (!isResult && now >= end + RESULT_DELAY_MS) {
+          isResult = true;
+        }
         const isClosed = !isLive && !isUpcoming && !isResult;
 
         const isDisabled = !isLive || slot.isPlaceholder;
