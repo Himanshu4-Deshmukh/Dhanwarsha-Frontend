@@ -416,8 +416,13 @@ const TimeBazarPage = () => {
           const result = latestResults.find((r) => r.gameKey === draw.gameKey);
           const rawNumber =
             result?.rawNumber ?? draw.latestResult?.rawNumber ?? "***-**-***";
-          const openTime = result?.openTime ?? draw.startTime ?? "--";
-          const closeTime = result?.closeTime ?? "--";
+          const formatTime = (isoString) => {
+            if (isoString === "--") return "--";
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+          };
+          const openTime = result?.openTime ?? formatTime(draw.startTime) ?? "--";
+          const closeTime = result?.closeTime ?? formatTime(draw.endTime) ?? "--";
           const status = draw.status ?? "RUNNING FOR TODAY";
 
           return (
