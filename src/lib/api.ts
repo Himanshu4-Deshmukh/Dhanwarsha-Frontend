@@ -137,10 +137,15 @@ export const api = {
 
   // Live draws
   getLiveDraws: () => request<LiveDrawInfo[]>("/live-draws"),
-  placeLiveDrawBet: (gameKey: string, number: string, amount: number) =>
+  placeLiveDrawBet: (
+    gameKey: string,
+    number: string,
+    amount: number,
+    betType: "open" | "close" | "jodi"
+  ) =>
     request<any>(`/live-draws/${gameKey}/bets`, {
       method: "POST",
-      body: JSON.stringify({ number, amount }),
+      body: JSON.stringify({ number, amount, betType }),
     }),
   getMyLiveDrawBets: (gameKey?: string) =>
     request<LiveDrawBet[]>(
