@@ -706,8 +706,8 @@ const statusStyles: Record<string, string> = {
   PENDING: 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-400',
   APPROVED: 'border border-green-500/20  bg-green-500/10  text-green-400',
   REJECTED: 'border border-red-500/20    bg-red-500/10    text-red-400',
-  WIN: 'border border-green-500/20  bg-green-500/10  text-green-400',
-  LOSS: 'border border-red-500/20    bg-red-500/10    text-red-400',
+  WON: 'border border-green-500/20  bg-green-500/10  text-green-400',
+  LOST: 'border border-red-500/20    bg-red-500/10    text-red-400',
   RUNNING: 'border border-blue-500/20   bg-blue-500/10   text-blue-400',
 };
 
@@ -715,6 +715,13 @@ const gameTypeColors: Record<string, string> = {
   open: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20',
   close: 'bg-purple-500/15  text-purple-400  border border-purple-500/20',
   jodi: 'bg-amber-500/15   text-amber-400   border border-amber-500/20',
+};
+
+const normalizeBetStatus = (value?: string) => {
+  const status = (value ?? 'PENDING').toUpperCase();
+  if (status === 'WIN') return 'WON';
+  if (status === 'LOSS') return 'LOST';
+  return status;
 };
 
 const WalletPage = () => {
@@ -1237,7 +1244,7 @@ const WalletPage = () => {
                     const betType = (bet.betType ?? bet.type ?? 'open').toLowerCase();
                     const btLabel = betType.charAt(0).toUpperCase() + betType.slice(1);
                     const btColor = gameTypeColors[betType] ?? gameTypeColors['open'];
-                    const status = (bet.status ?? 'PENDING').toUpperCase();
+                    const status = normalizeBetStatus(bet.status);
                     const stColor = statusStyles[status] ?? 'bg-white/5 text-white/40';
                     const bidDate = bet.createdAt ? new Date(bet.createdAt) : null;
                     const dateStr = bidDate
@@ -1299,15 +1306,15 @@ const WalletPage = () => {
                           <div className="rounded-xl bg-white/[0.04] px-3 py-2">
                             <p className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/35">
                               <Coins className="h-3 w-3" />
-                              {status === 'WIN' ? 'Won' : 'Bid Amount'}
+                              {status === 'WON' ? 'Won' : 'Bid Amount'}
                             </p>
-                            {status === 'WIN' ? (
+                            {status === 'WON' ? (
                               <p className="text-base font-bold text-green-400">
                                 +{bet.payout ?? bet.amount}
                               </p>
                             ) : (
-                              <p className={`text-base font-bold ${status === 'LOSS' ? 'text-red-400' : 'text-primary'}`}>
-                                {status === 'LOSS' ? `-${bet.amount}` : bet.amount}
+                              <p className={`text-base font-bold ${status === 'LOST' ? 'text-red-400' : 'text-primary'}`}>
+                                {status === 'LOST' ? `-${bet.amount}` : bet.amount}
                               </p>
                             )}
                           </div>

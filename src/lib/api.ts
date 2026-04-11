@@ -78,6 +78,7 @@ export type LiveDrawBet = {
   gameKey: string;
   number: string;
   amount: number;
+  betType?: "open" | "close" | "jodi";
   status: string;
   payout?: number;
   createdAt: string;

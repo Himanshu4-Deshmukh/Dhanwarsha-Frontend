@@ -2517,8 +2517,8 @@ const betTypeColors: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   PENDING: "border border-yellow-500/20 bg-yellow-500/10 text-yellow-400",
-  WIN:     "border border-green-500/20  bg-green-500/10  text-green-400",
-  LOSS:    "border border-red-500/20    bg-red-500/10    text-red-400",
+  WON:     "border border-green-500/20  bg-green-500/10  text-green-400",
+  LOST:    "border border-red-500/20    bg-red-500/10    text-red-400",
   RUNNING: "border border-blue-500/20   bg-blue-500/10   text-blue-400",
 };
 
@@ -2558,6 +2558,50 @@ const addMinutes = (timeStr: string | undefined, mins: number): string => {
     hour12: true,
   });
 };
+
+const formatClockTime = (value?: string) => {
+  if (!value) return "--";
+
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  return value;
+};
+
+const normalizeBetStatus = (value?: string) => {
+  const status = (value ?? "PENDING").toUpperCase();
+  if (status === "WIN") return "WON";
+  if (status === "LOSS") return "LOST";
+  return status;
+};
+
+const getDrawDisplayStatus = (value?: string) => {
+  const status = (value ?? "").toUpperCase();
+
+  if (["OPEN", "LIVE", "RUNNING"].includes(status)) return "LIVE";
+  if (["UPCOMING", "NOT_STARTED"].includes(status)) return "UPCOMING";
+  if (["RESULT_DECLARED", "RESULTED"].includes(status)) return "RESULT DECLARED";
+  if (["CLOSED", "CLOSED_FOR_TODAY"].includes(status)) return "CLOSED";
+
+  return status || "UPCOMING";
+};
+
+const isDrawOpenForBetting = (value?: string) =>
+  (value ?? "").toUpperCase() === "OPEN";
+
+const isDrawUpcoming = (value?: string) =>
+  ["UPCOMING", "NOT_STARTED"].includes((value ?? "").toUpperCase());
+
+const isDrawClosed = (value?: string) =>
+  ["RESULT_DECLARED", "RESULTED", "CLOSED", "CLOSED_FOR_TODAY"].includes(
+    (value ?? "").toUpperCase(),
+  );
 
 // ── Modal stage (navigation only) ────────────────────────────────────────────
 
@@ -2687,17 +2731,7 @@ const TimeBazarPage = () => {
 
   const openPlayModal = (gameKey: string) => {
     const draw = liveDraws.find((d) => d.gameKey === gameKey);
-    const result = latestResults.find((r) => r.gameKey === gameKey);
-    const upperStatus = (draw?.status ?? "").toUpperCase();
-
-    // const isClosed = false;
-    const isClosed =
-      upperStatus === "RESULT_DECLARED" ||
-      upperStatus === "CLOSED" ||
-      upperStatus === "RESULTED" ||
-      upperStatus === "CLOSED_FOR_TODAY";
-
-    if (isClosed) {
+    if (!isDrawOpenForBetting(draw?.status)) {
       setInfoModalDraw(draw ?? null);
       setInfoModalOpen(true);
       return;
@@ -2906,7 +2940,7 @@ const TimeBazarPage = () => {
   const modalGameName =
     selectedDraw?.gameName ?? selectedResult?.gameName ?? "Time Bazar";
   const modalStatusLabel =
-    selectedDraw?.status ?? selectedResult?.timeWindow ?? "Running for today";
+    getDrawDisplayStatus(selectedDraw?.status);
   const modalOpenTime = selectedResult?.openTime ?? selectedDraw?.startTime;
   const modalCloseTime = selectedResult?.closeTime ?? selectedDraw?.endTime;
   const selectedGameTypeLabel =
@@ -2968,14 +3002,12 @@ const TimeBazarPage = () => {
           const result = latestResults.find((r) => r.gameKey === draw.gameKey);
           const rawNumber =
             result?.rawNumber ?? draw.latestResult?.rawNumber ?? "***-**-***";
-          const formatTime = (isoString) => {
-            if (isoString === "--") return "--";
-            const date = new Date(isoString);
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-          };
-          const openTime = result?.openTime ?? formatTime(draw.startTime) ?? "--";
-          const closeTime = result?.closeTime ?? formatTime(draw.endTime) ?? "--";
-          const status = draw.status ?? "RUNNING FOR TODAY";
+          const openTime = result?.openTime ?? formatClockTime(draw.startTime) ?? "--";
+          const closeTime = result?.closeTime ?? formatClockTime(draw.endTime) ?? "--";
+          const status = getDrawDisplayStatus(draw.status);
+          const closed = isDrawClosed(draw.status);
+          const upcoming = isDrawUpcoming(draw.status);
+          const canBet = isDrawOpenForBetting(draw.status);
 
           return (
             <div
@@ -2985,27 +3017,18 @@ const TimeBazarPage = () => {
               <div className="flex items-start justify-between">
                 <div>
                   {(() => {
-                    const upperStatus = (draw.status ?? "").toUpperCase();
-                    const isClosed =
-                      upperStatus === "RESULT_DECLARED" ||
-                      upperStatus === "CLOSED" ||
-                      upperStatus === "RESULTED" ||
-                      upperStatus === "CLOSED_FOR_TODAY";
-                    const isUpcoming =
-                      upperStatus === "UPCOMING" || upperStatus === "NOT_STARTED";
+                    const isClosed = closed;
+                    const isUpcoming = upcoming;
 
                     if (isUpcoming) {
-                      const opensAt = result?.openTime ??
-                        new Date(draw.startTime).toLocaleTimeString("en-US", {
-                          hour: "2-digit", minute: "2-digit", hour12: true,
-                        });
+                      const opensAt = result?.openTime ?? formatClockTime(draw.startTime);
                       return (
                         <>
                           <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80">
                             ⏳ Opens at {opensAt}
                           </p>
                           <h2 className="text-xl font-bold text-white">{draw.gameName}</h2>
-                          <p className="mt-1 text-sm text-white/40">Bidding not started yet</p>
+                          <p className="mt-1 text-sm text-white/40">Bidding starts at {opensAt}</p>
                         </>
                       );
                     }
@@ -3016,7 +3039,7 @@ const TimeBazarPage = () => {
                           <div className="flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-red-400" />
                             <p className="text-xs uppercase tracking-[0.3em] text-red-400">
-                              Closed For Today
+                              {status}
                             </p>
                           </div>
                           <h2 className="text-xl font-bold text-white">{draw.gameName}</h2>
@@ -3046,20 +3069,13 @@ const TimeBazarPage = () => {
                 </div>
 
                 {(() => {
-                  const upperStatus = (draw.status ?? "").toUpperCase();
-                  const isClosed =
-                    upperStatus === "RESULT_DECLARED" ||
-                    upperStatus === "CLOSED" ||
-                    upperStatus === "RESULTED" ||
-                    upperStatus === "CLOSED_FOR_TODAY";
-
                   return (
                     <button
                       type="button"
                       onClick={() => openPlayModal(draw.gameKey)}
-                      className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition ${isClosed
-                          ? "border-white/10 bg-white/10 text-white/30 cursor-not-allowed"
-                          : "border-white/20 bg-gradient-to-r from-primary to-emerald-500 text-white"
+                      className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition ${canBet
+                          ? "border-white/20 bg-gradient-to-r from-primary to-emerald-500 text-white"
+                          : "border-white/10 bg-white/10 text-white/60"
                         }`}
                     >
                       <span className="text-xs">▶</span> Play
@@ -3177,7 +3193,7 @@ const TimeBazarPage = () => {
                     const betType = (bet as any).betType ?? "open";
                     const btLabel = betType.charAt(0).toUpperCase() + betType.slice(1);
                     const btColor = betTypeColors[betType] ?? betTypeColors["open"];
-                    const status  = (bet.status ?? "PENDING").toUpperCase();
+                    const status  = normalizeBetStatus(bet.status);
                     const stColor = statusColors[status] ?? "bg-white/5 text-white/40";
                     const bidDate = bet.createdAt ? new Date(bet.createdAt) : null;
                     const dateStr = bidDate
@@ -3237,15 +3253,15 @@ const TimeBazarPage = () => {
                           <div className="rounded-xl bg-white/[0.04] px-3 py-2">
                             <p className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/35">
                               <Coins className="h-3 w-3" />
-                              {status === "WIN" ? "Won" : "Bid Amount"}
+                              {status === "WON" ? "Won" : "Bid Amount"}
                             </p>
-                            {status === "WIN" ? (
+                            {status === "WON" ? (
                               <p className="text-base font-bold text-green-400">
                                 +{bet.payout ?? bet.amount}
                               </p>
                             ) : (
-                              <p className={`text-base font-bold ${status === "LOSS" ? "text-red-400" : "text-primary"}`}>
-                                {status === "LOSS" ? `-${bet.amount}` : bet.amount}
+                              <p className={`text-base font-bold ${status === "LOST" ? "text-red-400" : "text-primary"}`}>
+                                {status === "LOST" ? `-${bet.amount}` : bet.amount}
                               </p>
                             )}
                           </div>
@@ -3524,10 +3540,20 @@ const TimeBazarPage = () => {
               <h2 className="text-xl font-extrabold uppercase tracking-wide text-white">
                 {infoModalDraw?.gameName ?? "Time Bazar"}
               </h2>
-              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
-                <p className="text-xs font-semibold text-red-400">
-                  Betting Closed For Today
+              <div
+                className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 ${
+                  isDrawUpcoming(infoModalDraw?.status)
+                    ? "border border-amber-500/30 bg-amber-500/10 text-amber-400"
+                    : "border border-red-500/30 bg-red-500/10 text-red-400"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    isDrawUpcoming(infoModalDraw?.status) ? "bg-amber-400" : "bg-red-400"
+                  }`}
+                />
+                <p className="text-xs font-semibold">
+                  {getDrawDisplayStatus(infoModalDraw?.status)}
                 </p>
               </div>
             </div>
@@ -3543,22 +3569,10 @@ const TimeBazarPage = () => {
                 );
                 const openBidTime =
                   result?.openTime ??
-                  (infoModalDraw?.startTime
-                    ? new Date(infoModalDraw.startTime).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })
-                    : "--");
+                  formatClockTime(infoModalDraw?.startTime);
                 const closeBidTime =
                   result?.closeTime ??
-                  (infoModalDraw?.endTime
-                    ? new Date(infoModalDraw.endTime).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })
-                    : "--");
+                  formatClockTime(infoModalDraw?.endTime);
                 const openResultTime = addMinutes(openBidTime, 10);
                 const closeResultTime = addMinutes(closeBidTime, 10);
                 const resultNumber =
