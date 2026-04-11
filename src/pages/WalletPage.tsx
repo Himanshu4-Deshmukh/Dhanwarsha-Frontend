@@ -691,8 +691,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 
-const UPI_ID = 'harshninave58@okaxis';
-const UPI_NAME = 'Harsh Sanjay Ninave';
 const QR_EXPIRY_SEC = 30;
 const MIN_WITHDRAWAL = 1000;
 const ITEMS_PER_PAGE = 5;
@@ -748,6 +746,10 @@ const WalletPage = () => {
   const [showQR, setShowQR] = useState(false);
   const [qrCounter, setQrCounter] = useState(QR_EXPIRY_SEC);
   const [qrAmount, setQrAmount] = useState('');
+  const [paymentConfig, setPaymentConfig] = useState<{ upiId: string; upiName: string }>({
+    upiId: '',
+    upiName: '',
+  });
   const [isMobile, setIsMobile] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -760,17 +762,19 @@ const WalletPage = () => {
 
   const loadData = async () => {
     try {
-      const [wallet, txs, payments, withdrawals, bids] = await Promise.all([
+      const [wallet, txs, payments, withdrawals, bids, paymentConfig] = await Promise.all([
         api.getBalance(),
         api.getTransactions(),
         api.getMyPayments().catch(() => []),
         api.getMyWithdrawals().catch(() => []),
         api.getMyLiveDrawBets().catch(() => []),
+        api.getPaymentConfig().catch(() => ({ upiId: '', upiName: '' })),
       ]);
       setBalance(wallet.balance);
       setTransactions(txs);
       setPaymentRequests(payments);
       setWithdrawalRequests(withdrawals);
+      setPaymentConfig(paymentConfig);
       setBidsHistory(
         (bids ?? []).sort(
           (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -805,7 +809,12 @@ const WalletPage = () => {
   const handleGenerateQR = () => {
     const amount = Number(requestAmount);
     if (!amount || amount < 1) { toast.error('Enter a valid amount first'); return; }
-    const link = `upi://pay?pn=${encodeURIComponent(UPI_NAME)}&am=${amount}&mode=01&pa=${UPI_ID}`;
+    if (!paymentConfig.upiId.trim()) {
+      toast.error('Payment UPI is not configured yet. Please contact admin.');
+      return;
+    }
+    const upiName = paymentConfig.upiName.trim() || 'Dhanwarsha Payments';
+    const link = `upi://pay?pn=${encodeURIComponent(upiName)}&am=${amount}&mode=01&pa=${paymentConfig.upiId.trim()}`;
     setUpiLink(link);
     setQrAmount(String(amount));
     setQrCounter(QR_EXPIRY_SEC);
@@ -951,8 +960,12 @@ const WalletPage = () => {
                 <div className="rounded-xl border border-primary/20 bg-black/30 p-4">
                   <div className="mb-3 text-center">
                     <p className="text-xs text-white/40">Pay via UPI</p>
-                    <p className="text-sm font-semibold text-white">{UPI_NAME}</p>
-                    <p className="text-xs text-primary/80">{UPI_ID}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {paymentConfig.upiName || 'Dhanwarsha Payments'}
+                    </p>
+                    <p className="text-xs text-primary/80">
+                      {paymentConfig.upiId || 'UPI not configured'}
+                    </p>
                   </div>
                   <div className="flex flex-col items-center gap-3">
                     <div className="relative rounded-xl bg-white p-3 shadow-[0_0_0_1px_rgba(245,166,35,0.3)]">

@@ -25,6 +25,8 @@ const resolveScreenshotUrl = (url?: string) => {
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([]);
+  const [paymentConfig, setPaymentConfig] = useState({ upiId: "", upiName: "" });
+  const [savingConfig, setSavingConfig] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<
     "ALL" | "PENDING" | "APPROVED" | "REJECTED"
@@ -46,8 +48,21 @@ export default function AdminPayments() {
     }
   };
 
+  const fetchPaymentConfig = async () => {
+    try {
+      const data = await api.admin.getPaymentConfig();
+      setPaymentConfig({
+        upiId: data?.upiId ?? "",
+        upiName: data?.upiName ?? "",
+      });
+    } catch {
+      toast.error("Failed to load payment UPI settings");
+    }
+  };
+
   useEffect(() => {
     fetchPayments();
+    fetchPaymentConfig();
   }, []);
 
   // Reset to page 1 when filter changes
@@ -87,6 +102,30 @@ export default function AdminPayments() {
     }
   };
 
+  const handleSavePaymentConfig = async () => {
+    if (!paymentConfig.upiId.trim()) {
+      toast.error("Enter a valid UPI ID");
+      return;
+    }
+
+    setSavingConfig(true);
+    try {
+      const saved = await api.admin.updatePaymentConfig(
+        paymentConfig.upiId.trim(),
+        paymentConfig.upiName.trim(),
+      );
+      setPaymentConfig({
+        upiId: saved.upiId ?? "",
+        upiName: saved.upiName ?? "",
+      });
+      toast.success("Payment UPI updated");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update payment UPI");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   const statusConfig: Record<string, { bg: string; text: string }> = {
     PENDING: { bg: "bg-yellow-500/10", text: "text-yellow-400" },
     APPROVED: { bg: "bg-green-500/10", text: "text-green-400" },
@@ -102,6 +141,58 @@ export default function AdminPayments() {
         <p className="mt-1 text-sm text-white/40">
           Review and manage user deposit requests
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-white">Deposit UPI Settings</h2>
+            <p className="mt-1 text-sm text-white/40">
+              Wallet QR payments will use this UPI ID and display name.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-white/50">
+              UPI Display Name
+            </label>
+            <input
+              type="text"
+              value={paymentConfig.upiName}
+              onChange={(e) =>
+                setPaymentConfig((prev) => ({ ...prev, upiName: e.target.value }))
+              }
+              placeholder="Dhanwarsha Payments"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-white/50">
+              UPI ID
+            </label>
+            <input
+              type="text"
+              value={paymentConfig.upiId}
+              onChange={(e) =>
+                setPaymentConfig((prev) => ({ ...prev, upiId: e.target.value }))
+              }
+              placeholder="merchant@okaxis"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={handleSavePaymentConfig}
+            disabled={savingConfig}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[hsl(220,20%,7%)] transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {savingConfig ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Save UPI
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs */}

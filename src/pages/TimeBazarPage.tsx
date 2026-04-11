@@ -3446,43 +3446,43 @@ const TimeBazarPage = () => {
                       })}
                     </div>
 
-                    {/* ── Input row: number | amount | Add | Submit ── */}
-                    <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[hsl(220,20%,6%)] px-4 py-3">
-                      <span className="text-xl font-bold text-white">
-                        {gameType === "jodi"
-                          ? String(selectedSingleDigit).padStart(2, "0")
-                          : selectedSingleDigit}
-                      </span>
+                    {/* ── Input row: number | amount | Add, with submit below ── */}
+                    <div className="space-y-3 rounded-2xl border border-white/10 bg-[hsl(220,20%,6%)] px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-bold text-white">
+                          {gameType === "jodi"
+                            ? String(selectedSingleDigit).padStart(2, "0")
+                            : selectedSingleDigit}
+                        </span>
 
-                      <input
-                        type="number"
-                        min={0}
-                        placeholder="Enter amount"
-                        value={digitInputs[selectedSingleDigit] ?? ""}
-                        onChange={(event) =>
-                          setDigitInputs((prev) => ({
-                            ...prev,
-                            [selectedSingleDigit]: event.target.value,
-                          }))
-                        }
-                        className="w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-primary"
-                      />
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="Enter amount"
+                          value={digitInputs[selectedSingleDigit] ?? ""}
+                          onChange={(event) =>
+                            setDigitInputs((prev) => ({
+                              ...prev,
+                              [selectedSingleDigit]: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg border border-white/10 bg-[#0f1620] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-primary"
+                        />
 
-                      {/* Add to pending list */}
-                      <button
-                        type="button"
-                        onClick={() => handleAddDigit(selectedSingleDigit)}
-                        className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/20 transition"
-                      >
-                        Add
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddDigit(selectedSingleDigit)}
+                          className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/20"
+                        >
+                          Add
+                        </button>
+                      </div>
 
-                      {/* Submit immediately */}
                       <button
                         type="button"
                         onClick={() => handleAddAndSubmitDigit(selectedSingleDigit)}
                         disabled={placingLiveBet}
-                        className="rounded-full bg-gradient-to-r from-primary to-emerald-500 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40 transition"
+                        className="w-full rounded-full bg-gradient-to-r from-primary to-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-40"
                       >
                         {placingLiveBet ? "..." : "Submit"}
                       </button>

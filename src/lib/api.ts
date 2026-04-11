@@ -1,6 +1,7 @@
 const API_BASE =
-  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
-// "http://localhost:8001/api";
+  import.meta.env.VITE_API_URL || 
+  // "https://dhanwarsha.adonservice.in/api";
+"http://localhost:8001/api";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
   const isFormData =
@@ -82,6 +83,11 @@ export type LiveDrawBet = {
   status: string;
   payout?: number;
   createdAt: string;
+};
+
+export type PaymentConfig = {
+  upiId: string;
+  upiName: string;
 };
 
 export const api = {
@@ -176,6 +182,7 @@ export const api = {
       body: JSON.stringify({ amount, screenshotUrl }),
     }),
   getMyPayments: () => request<any[]>("/payments/my-requests"),
+  getPaymentConfig: () => request<PaymentConfig>("/app-settings/payment-config"),
 
   // Withdrawals
   createWithdrawal: (amount: number, upiId: string) =>
@@ -195,6 +202,12 @@ export const api = {
 
     // Payments
     getAllPaymentRequests: () => request<any[]>("/admin/payment-requests"),
+    getPaymentConfig: () => request<PaymentConfig>("/admin/payment-config"),
+    updatePaymentConfig: (upiId: string, upiName: string) =>
+      request<PaymentConfig>("/admin/payment-config", {
+        method: "POST",
+        body: JSON.stringify({ upiId, upiName }),
+      }),
     approvePayment: (id: string, adminRemark?: string) =>
       request<any>(`/admin/payment-requests/${id}/approve`, {
         method: "POST",
