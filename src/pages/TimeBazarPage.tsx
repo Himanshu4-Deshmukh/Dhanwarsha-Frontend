@@ -2753,6 +2753,13 @@ const TimeBazarPage = () => {
   };
 
   const closePlayModal = useCallback(() => {
+    setModalStage("window");
+    setGameType("open");
+    setDigitInputs({});
+    setPattiNumber("");
+    setPattiPoints("");
+    setBidEntries([]);
+    setSelectedSingleDigit(0);
     setIsPlayModalOpen(false);
   }, []);
 
