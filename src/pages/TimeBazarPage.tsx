@@ -2647,39 +2647,47 @@ const TimeBazarPage = () => {
     ? Array.from({ length: 100 }, (_, i) => i)
     : Array.from({ length: 10 }, (_, i) => i);
 
-  const loadLatest = useCallback(async () => {
-    setLatestLoading(true);
+  const loadLatest = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLatestLoading(true);
+    }
     try {
       const results = await api.getTimeBazarLatest();
       setLatestResults(results ?? []);
     } catch (error) {
       console.error("Failed to load Time Bazar results", error);
     } finally {
-      setLatestLoading(false);
+      if (!silent) {
+        setLatestLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadLatest();
-    const interval = setInterval(loadLatest, 60000);
+    const interval = setInterval(() => loadLatest(true), 60000);
     return () => clearInterval(interval);
   }, [loadLatest]);
 
-  const loadLiveDraws = useCallback(async () => {
-    setLiveDrawsLoading(true);
+  const loadLiveDraws = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLiveDrawsLoading(true);
+    }
     try {
       const draws = await api.getLiveDraws();
       setLiveDraws(draws ?? []);
     } catch (error) {
       console.error("Failed to load live draws", error);
     } finally {
-      setLiveDrawsLoading(false);
+      if (!silent) {
+        setLiveDrawsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadLiveDraws();
-    const interval = setInterval(loadLiveDraws, 60000);
+    const interval = setInterval(() => loadLiveDraws(true), 60000);
     return () => clearInterval(interval);
   }, [loadLiveDraws]);
 
