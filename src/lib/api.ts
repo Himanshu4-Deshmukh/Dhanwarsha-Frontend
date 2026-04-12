@@ -1,7 +1,6 @@
 const API_BASE =
-  import.meta.env.VITE_API_URL || 
-  // "https://dhanwarsha.adonservice.in/api";
-"http://localhost:8001/api";
+  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
+// "http://localhost:8001/api";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
   const isFormData =
@@ -148,7 +147,7 @@ export const api = {
     gameKey: string,
     number: string,
     amount: number,
-    betType: "open" | "close" | "jodi"
+    betType: "open" | "close" | "jodi",
   ) =>
     request<any>(`/live-draws/${gameKey}/bets`, {
       method: "POST",
@@ -182,7 +181,8 @@ export const api = {
       body: JSON.stringify({ amount, screenshotUrl }),
     }),
   getMyPayments: () => request<any[]>("/payments/my-requests"),
-  getPaymentConfig: () => request<PaymentConfig>("/app-settings/payment-config"),
+  getPaymentConfig: () =>
+    request<PaymentConfig>("/app-settings/payment-config"),
 
   // Withdrawals
   createWithdrawal: (amount: number, upiId: string) =>
