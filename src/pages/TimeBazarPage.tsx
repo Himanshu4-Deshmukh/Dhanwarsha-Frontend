@@ -1117,10 +1117,10 @@ const TimeBazarPage = () => {
             {/* Header */}
             <div className="px-6 pt-8 pb-5 text-center">
               <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-1">
-                Time Bazar
+                Matka Play
               </p>
               <h2 className="text-xl font-extrabold uppercase tracking-wide text-white">
-                {infoModalDraw?.gameName ?? "Time Bazar"}
+                {infoModalDraw?.gameName ?? "Matka Play"}
               </h2>
               <div
                 className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 ${
