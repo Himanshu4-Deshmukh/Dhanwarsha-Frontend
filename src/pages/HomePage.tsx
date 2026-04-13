@@ -15,10 +15,38 @@ type FixedSlotWindow = {
 };
 
 const FIXED_SLOT_WINDOWS: FixedSlotWindow[] = [
-  { key: "morning", label: "Morning", startHour: 9, startMinute: 0, endHour: 12, endMinute: 0 },
-  { key: "afternoon", label: "Afternoon", startHour: 13, startMinute: 0, endHour: 16, endMinute: 0 },
-  { key: "evening", label: "Evening", startHour: 17, startMinute: 0, endHour: 20, endMinute: 0 },
-  { key: "night", label: "Night", startHour: 21, startMinute: 0, endHour: 24, endMinute: 0 },
+  {
+    key: "morning",
+    label: "Morning",
+    startHour: 9,
+    startMinute: 0,
+    endHour: 12,
+    endMinute: 0,
+  },
+  {
+    key: "afternoon",
+    label: "Afternoon",
+    startHour: 13,
+    startMinute: 0,
+    endHour: 16,
+    endMinute: 0,
+  },
+  {
+    key: "evening",
+    label: "Evening",
+    startHour: 17,
+    startMinute: 0,
+    endHour: 20,
+    endMinute: 0,
+  },
+  {
+    key: "night",
+    label: "Night",
+    startHour: 21,
+    startMinute: 0,
+    endHour: 24,
+    endMinute: 0,
+  },
 ];
 
 const RESULT_DELAY_MS = 5 * 60 * 1000;
@@ -55,23 +83,29 @@ const HomePage = () => {
     return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   }, []);
 
-  const getWindowKeyFromTimes = useCallback((start: Date, end: Date, useUtc = false) => {
-    const startHour = useUtc ? start.getUTCHours() : start.getHours();
-    const startMinute = useUtc ? start.getUTCMinutes() : start.getMinutes();
-    const rawEndHour = useUtc ? end.getUTCHours() : end.getHours();
-    const endMinute = useUtc ? end.getUTCMinutes() : end.getMinutes();
-    const endHour = rawEndHour === 0 && endMinute === 0 && end.getTime() > start.getTime() ? 24 : rawEndHour;
+  const getWindowKeyFromTimes = useCallback(
+    (start: Date, end: Date, useUtc = false) => {
+      const startHour = useUtc ? start.getUTCHours() : start.getHours();
+      const startMinute = useUtc ? start.getUTCMinutes() : start.getMinutes();
+      const rawEndHour = useUtc ? end.getUTCHours() : end.getHours();
+      const endMinute = useUtc ? end.getUTCMinutes() : end.getMinutes();
+      const endHour =
+        rawEndHour === 0 && endMinute === 0 && end.getTime() > start.getTime()
+          ? 24
+          : rawEndHour;
 
-    const matchedWindow = FIXED_SLOT_WINDOWS.find(
-      (window) =>
-        window.startHour === startHour &&
-        window.startMinute === startMinute &&
-        window.endHour === endHour &&
-        window.endMinute === endMinute,
-    );
+      const matchedWindow = FIXED_SLOT_WINDOWS.find(
+        (window) =>
+          window.startHour === startHour &&
+          window.startMinute === startMinute &&
+          window.endHour === endHour &&
+          window.endMinute === endMinute,
+      );
 
-    return matchedWindow?.key ?? null;
-  }, []);
+      return matchedWindow?.key ?? null;
+    },
+    [],
+  );
 
   const isLiveSlot = useCallback((slot: any) => {
     const now = Date.now();
@@ -111,10 +145,13 @@ const HomePage = () => {
   //     isPlaceholder: !!slot.isPlaceholder,
   //   }));
   // }, [allSlots]);
-  
+
   const slots = useMemo(() => {
     return [...allSlots]
-      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+      .sort(
+        (a, b) =>
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      )
       .map((slot) => ({
         ...slot,
         displayLabel: slot.windowLabel,
@@ -144,7 +181,9 @@ const HomePage = () => {
       }
       const m = Math.floor(diff / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`);
+      setTimeLeft(
+        `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
+      );
     };
 
     update();
@@ -162,25 +201,35 @@ const HomePage = () => {
 
     setBetting(true);
     try {
-      await api.placeBet(selectedSlot._id, String(selectedNumber).padStart(2, '0'), customBetAmount);
+      await api.placeBet(
+        selectedSlot._id,
+        String(selectedNumber).padStart(2, "0"),
+        customBetAmount,
+      );
 
-      const multiplier = (selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10);
+      const multiplier =
+        (selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10);
       const winEstimate = customBetAmount * multiplier;
 
-      toast.success(`Bet placed on #${String(selectedNumber).padStart(2, '0')}`, {
-        description: `${customBetAmount} coins deducted. Win ${winEstimate} coins.`,
-      });
+      toast.success(
+        `Bet placed on #${String(selectedNumber).padStart(2, "0")}`,
+        {
+          description: `${customBetAmount} rupees deducted. Win ${winEstimate} rupees.`,
+        },
+      );
 
       setBetConfirmOpen(false);
       setSelectedNumber(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message || "Failed to place bet. Make sure your balance is sufficient.");
+      toast.error(
+        err.message ||
+          "Failed to place bet. Make sure your balance is sufficient.",
+      );
     } finally {
       setBetting(false);
     }
   };
-
 
   const activeBets = selectedSlot
     ? myBets.filter((b) => {
@@ -209,15 +258,19 @@ const HomePage = () => {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-white/40">Welcome back</p>
-          <h1 className="text-xl font-bold text-white font-display">{user?.name || "Player"}</h1>
+          <h1 className="text-xl font-bold text-white font-display">
+            {user?.name || "Player"}
+          </h1>
         </div>
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2"
         >
           <Coins className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-primary font-display">{balance ?? 0}</span>
-          <span className="text-xs text-white/40">coins</span>
+          <span className="text-sm font-bold text-primary font-display">
+            {balance ?? 0}
+          </span>
+          <span className="text-xs text-white/40">rupees</span>
         </motion.div>
       </div>
 
@@ -229,7 +282,8 @@ const HomePage = () => {
 
         const isLive = slot.status === "OPEN" && now >= start && now < end;
         const isUpcoming = now < start;
-        const isResult = slot.status === "RESULT_DECLARED" && now >= end + RESULT_DELAY_MS;
+        const isResult =
+          slot.status === "RESULT_DECLARED" && now >= end + RESULT_DELAY_MS;
         const isClosed = !isLive && !isUpcoming && !isResult;
 
         const isDisabled = !isLive || slot.isPlaceholder;
@@ -295,29 +349,47 @@ const HomePage = () => {
                 {isSelected && (
                   <div className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5">
                     <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-mono text-lg font-bold text-primary">{timeLeft || "--:--"}</span>
+                    <span className="font-mono text-lg font-bold text-primary">
+                      {timeLeft || "--:--"}
+                    </span>
                   </div>
                 )}
               </div>
 
-              <h2 className="text-lg font-bold text-white font-display">{slot.windowLabel}</h2>
+              <h2 className="text-lg font-bold text-white font-display">
+                {slot.windowLabel}
+              </h2>
 
               <div className="mt-1 text-sm text-white/50">
-                Bet <span className="font-bold text-primary">{slot.betAmount ?? "--"} coins</span> · Win{" "}
-                <span className="font-bold text-green-400">{slot.winAmount ?? "--"} coins</span>
-
-                {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
-                  <p className="mt-1 text-xs font-bold text-primary">Winning Number: #{String(slot.winningNumber).padStart(2, '0')}</p>
-                )}
-
+                Bet{" "}
+                <span className="font-bold text-primary">
+                  {slot.betAmount ?? "--"} rupees
+                </span>{" "}
+                · Win{" "}
+                <span className="font-bold text-green-400">
+                  {slot.winAmount ?? "--"} rupees
+                </span>
+                {isResult &&
+                  slot.winningNumber !== null &&
+                  slot.winningNumber !== undefined && (
+                    <p className="mt-1 text-xs font-bold text-primary">
+                      Winning Number: #
+                      {String(slot.winningNumber).padStart(2, "0")}
+                    </p>
+                  )}
                 {isUpcoming && (
                   <p className="mt-1 text-xs text-yellow-400">
-                    Starts at {new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    Starts at{" "}
+                    {new Date(slot.startTime).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
                   </p>
                 )}
-
                 {isClosed && !isResult && (
-                  <p className="mt-1 text-xs text-red-400">Result will be declared in 5 minutes after close.</p>
+                  <p className="mt-1 text-xs text-red-400">
+                    Result will be declared in 5 minutes after close.
+                  </p>
                 )}
               </div>
             </div>
@@ -332,10 +404,17 @@ const HomePage = () => {
                 >
                   <div className="grid grid-cols-10 gap-1.5">
                     {Array.from(
-                      { length: selectedSlot.numberRange.end - selectedSlot.numberRange.start + 1 },
+                      {
+                        length:
+                          selectedSlot.numberRange.end -
+                          selectedSlot.numberRange.start +
+                          1,
+                      },
                       (_, i) => {
                         const num = selectedSlot.numberRange.start + i;
-                        const isMyBet = activeBets.some((b) => Number(b.number) === num);
+                        const isMyBet = activeBets.some(
+                          (b) => Number(b.number) === num,
+                        );
                         return (
                           <motion.button
                             key={num}
@@ -346,20 +425,21 @@ const HomePage = () => {
                               setBetConfirmOpen(true);
                             }}
                             disabled={isDisabled}
-                            className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${isDisabled
-                              ? "cursor-not-allowed bg-white/5 text-white/20"
-                              : isMyBet
-                                ? "bg-primary/20 text-primary ring-1 ring-primary/40"
-                                : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-                              }`}
+                            className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${
+                              isDisabled
+                                ? "cursor-not-allowed bg-white/5 text-white/20"
+                                : isMyBet
+                                  ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                                  : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                            }`}
                           >
-                            {String(num).padStart(2, '0')}
+                            {String(num).padStart(2, "0")}
                             {isMyBet && (
                               <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
                             )}
                           </motion.button>
                         );
-                      }
+                      },
                     )}
                   </div>
                 </motion.div>
@@ -393,12 +473,16 @@ const HomePage = () => {
 
               <div className="mb-5 text-center">
                 <div className="gold-glow mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-gold">
-                  <span className="text-3xl font-bold text-black">{String(selectedNumber).padStart(2, '0')}</span>
+                  <span className="text-3xl font-bold text-black">
+                    {String(selectedNumber).padStart(2, "0")}
+                  </span>
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="mb-2 block text-sm text-white/70">Bet Amount</label>
+                <label className="mb-2 block text-sm text-white/70">
+                  Bet Amount
+                </label>
                 <input
                   type="number"
                   min={selectedSlot.betAmount || 10}
@@ -411,9 +495,13 @@ const HomePage = () => {
               </div>
 
               <p className="mb-4 text-center text-sm text-white/50">
-                Cost: {customBetAmount} coins
+                Cost: {customBetAmount} rupees
                 <br />
-                Win: {customBetAmount * ((selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10))} coins
+                Win:{" "}
+                {customBetAmount *
+                  ((selectedSlot.winAmount || 900) /
+                    (selectedSlot.betAmount || 10))}{" "}
+                rupees
               </p>
 
               <button
