@@ -543,13 +543,51 @@ const TimeBazarPage = () => {
 
         {liveDraws.map((draw) => {
           const result = latestResults.find((r) => r.gameKey === draw.gameKey);
-          const rawNumber =
-            result?.rawNumber ?? draw.latestResult?.rawNumber ?? "***-**-***";
+          const isToday = (dateStr?: string) => {
+            if (!dateStr) return false;
+
+            const date = new Date(dateStr);
+            const now = new Date();
+
+            return (
+              date.getFullYear() === now.getFullYear() &&
+              date.getMonth() === now.getMonth() &&
+              date.getDate() === now.getDate()
+            );
+          };
+
+          const isLiveStatus = ["OPEN", "LIVE", "RUNNING"].includes(
+            draw.status?.toUpperCase(),
+          );
+
+          const latestRaw =
+            result?.rawNumber ?? draw.latestResult?.rawNumber ?? null;
+
+          const latestFetchedAt =
+            result?.fetchedAt ?? draw.latestResult?.fetchedAt;
+
+          let rawNumber = "***-**-***";
+
+          if (!isLiveStatus) {
+            rawNumber = latestRaw || "***-**-***";
+          } else {
+            if (/^\d{3}-\d{2}-\d{3}$/.test(latestRaw)) {
+              rawNumber = latestRaw; // full result
+            } else if (/^\d{3}-\d$/.test(latestRaw)) {
+              rawNumber = `${latestRaw}*-***`; // partial result
+            } else {
+              rawNumber = "***-**-***";
+            }
+          }
           const openTime =
             result?.openTime ?? formatClockTime(draw.startTime) ?? "--";
           const closeTime =
             result?.closeTime ?? formatClockTime(draw.endTime) ?? "--";
-          const status = getDrawDisplayStatus(draw.status);
+          let status = getDrawDisplayStatus(draw.status);
+
+          if (isLiveStatus && /^\d{3}-\d$/.test(latestRaw)) {
+            status = "RUNNING FOR CLOSE";
+          }
           const closed = isDrawClosed(draw.status);
           const upcoming = isDrawUpcoming(draw.status);
           const canBet = isDrawOpenForBetting(draw.status);
