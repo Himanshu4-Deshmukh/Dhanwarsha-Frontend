@@ -543,13 +543,51 @@ const TimeBazarPage = () => {
 
         {liveDraws.map((draw) => {
           const result = latestResults.find((r) => r.gameKey === draw.gameKey);
-          const rawNumber =
-            result?.rawNumber ?? draw.latestResult?.rawNumber ?? "***-**-***";
+          const isToday = (dateStr?: string) => {
+            if (!dateStr) return false;
+
+            const date = new Date(dateStr);
+            const now = new Date();
+
+            return (
+              date.getFullYear() === now.getFullYear() &&
+              date.getMonth() === now.getMonth() &&
+              date.getDate() === now.getDate()
+            );
+          };
+
+          const isLiveStatus = ["OPEN", "LIVE", "RUNNING"].includes(
+            draw.status?.toUpperCase(),
+          );
+
+          const latestRaw =
+            result?.rawNumber ?? draw.latestResult?.rawNumber ?? null;
+
+          const latestFetchedAt =
+            result?.fetchedAt ?? draw.latestResult?.fetchedAt;
+
+          let rawNumber = "***-**-***";
+
+          if (!isLiveStatus) {
+            rawNumber = latestRaw || "***-**-***";
+          } else {
+            if (/^\d{3}-\d{2}-\d{3}$/.test(latestRaw)) {
+              rawNumber = latestRaw; // full result
+            } else if (/^\d{3}-\d$/.test(latestRaw)) {
+              rawNumber = `${latestRaw}*-***`; // partial result
+            } else {
+              rawNumber = "***-**-***";
+            }
+          }
           const openTime =
             result?.openTime ?? formatClockTime(draw.startTime) ?? "--";
           const closeTime =
             result?.closeTime ?? formatClockTime(draw.endTime) ?? "--";
-          const status = getDrawDisplayStatus(draw.status);
+          let status = getDrawDisplayStatus(draw.status);
+
+          if (isLiveStatus && /^\d{3}-\d$/.test(latestRaw)) {
+            status = "RUNNING FOR CLOSE";
+          }
           const closed = isDrawClosed(draw.status);
           const upcoming = isDrawUpcoming(draw.status);
           const canBet = isDrawOpenForBetting(draw.status);
@@ -570,7 +608,7 @@ const TimeBazarPage = () => {
                         result?.openTime ?? formatClockTime(draw.startTime);
                       return (
                         <>
-                          <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80">
+                          <p className="text-xs uppercase tracking-[0.2em] text-amber-400/80">
                             ⏳ Opens at {opensAt}
                           </p>
                           <h2 className="text-xl font-bold text-white">
@@ -588,14 +626,14 @@ const TimeBazarPage = () => {
                         <>
                           <div className="flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-red-400" />
-                            <p className="text-xs uppercase tracking-[0.3em] text-red-400">
+                            <p className="text-xs uppercase tracking-[0.1em] text-red-400">
                               {status}
                             </p>
                           </div>
                           <h2 className="text-xl font-bold text-white">
                             {draw.gameName}
                           </h2>
-                          <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
+                          <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-white">
                             {rawNumber}
                           </p>
                         </>
@@ -607,14 +645,14 @@ const TimeBazarPage = () => {
                       <>
                         <div className="flex items-center gap-2">
                           <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-                          <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                          <p className="text-xs uppercase tracking-[0.1em] text-white/50">
                             {status}
                           </p>
                         </div>
                         <h2 className="text-xl font-bold text-white">
                           {draw.gameName}
                         </h2>
-                        <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
+                        <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-white">
                           {rawNumber}
                         </p>
                       </>
@@ -1117,10 +1155,10 @@ const TimeBazarPage = () => {
             {/* Header */}
             <div className="px-6 pt-8 pb-5 text-center">
               <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-1">
-                Matka Play
+                Matka King
               </p>
               <h2 className="text-xl font-extrabold uppercase tracking-wide text-white">
-                {infoModalDraw?.gameName ?? "Matka Play"}
+                {infoModalDraw?.gameName ?? "Matka King"}
               </h2>
               <div
                 className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 ${
