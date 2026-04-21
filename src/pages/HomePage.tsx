@@ -304,14 +304,7 @@ const HomePage = () => {
                     : "border-blue-500/30 bg-[hsl(220,20%,10%)] opacity-70"
             }`}
           >
-            <div
-              className={isLive ? "cursor-pointer" : "cursor-not-allowed"}
-              onClick={() => {
-                if (isLive && !slot.isPlaceholder) {
-                  setSelectedSlot(isSelected ? null : slot);
-                }
-              }}
-            >
+            <div>
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
@@ -346,7 +339,7 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {isSelected && (
+                {isSelected && isLive && (
                   <div className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5">
                     <Clock className="h-3.5 w-3.5 text-primary" />
                     <span className="font-mono text-lg font-bold text-primary">
@@ -394,6 +387,27 @@ const HomePage = () => {
               </div>
             </div>
 
+            {/* Play Button — only button is clickable, nothing else */}
+            <div className="mt-4 flex items-center justify-end">
+              <motion.button
+                whileTap={isLive && !slot.isPlaceholder ? { scale: 0.95 } : {}}
+                whileHover={isLive && !slot.isPlaceholder ? { scale: 1.03 } : {}}
+                disabled={!isLive || slot.isPlaceholder}
+                onClick={() => {
+                  if (isLive && !slot.isPlaceholder) {
+                    setSelectedSlot(isSelected ? null : slot);
+                  }
+                }}
+                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition-all ${isLive && !slot.isPlaceholder
+                    ? isSelected
+                      ? "bg-white/10 text-white/60"
+                      : "bg-gradient-gold text-black shadow-[0_0_12px_rgba(255,200,0,0.3)]"
+                    : "cursor-not-allowed bg-white/5 text-white/20"
+                  }`}
+              >
+                {isSelected && isLive ? "Close" : "Play"}
+              </motion.button>
+            </div>
             <AnimatePresence>
               {isSelected && (
                 <motion.div
