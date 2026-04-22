@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Clock, Target, Play } from "lucide-react";
+import { Coins, Clock, Loader2, Target, Play } from "lucide-react";
 import { toast } from "sonner";
 
+/* ✅ NEW */
 const RESULT_DELAY_MS = 5 * 60 * 1000;
 
 const HomePage = () => {
@@ -18,7 +19,7 @@ const HomePage = () => {
   const [betting, setBetting] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [betConfirmOpen, setBetConfirmOpen] = useState(false);
-  const [playModalOpen, setPlayModalOpen] = useState(false);
+  const [playModalOpen, setPlayModalOpen] = useState(false); // ✅ NEW
   const [myBets, setMyBets] = useState<any[]>([]);
   const [customBetAmount, setCustomBetAmount] = useState<number>(10);
 
@@ -115,7 +116,6 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Slots */}
       {slots.map((slot) => {
         const now = Date.now();
         const start = new Date(slot.startTime).getTime();
@@ -129,28 +129,25 @@ const HomePage = () => {
 
         return (
           <div key={slot._id} className="p-4 rounded-xl bg-black/40 border">
-            {/* Top Row */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs font-bold flex items-center gap-2">
-                {isLive && "LIVE"}
-                {isUpcoming && (
-                  <>
-                    UPCOMING
-                    <span className="text-[10px]">
-                      {new Date(slot.startTime).toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </>
-                )}
-                {isClosed && "CLOSED"}
-                {isResult && "RESULT"}
-              </div>
+            {/* Chip */}
+            <div className="mb-2 text-xs font-bold flex items-center gap-2">
+              {isLive && "LIVE"}
 
-              {isLive && (
-                <div className="text-xs text-primary">{timeLeft}</div>
+              {/* ✅ UPDATED */}
+              {isUpcoming && (
+                <>
+                  UPCOMING
+                  <span className="text-[10px]">
+                    {new Date(slot.startTime).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </>
               )}
+
+              {isClosed && "CLOSED"}
+              {isResult && "RESULT"}
             </div>
 
             {/* Title + Play */}
@@ -159,29 +156,49 @@ const HomePage = () => {
                 {slot.windowLabel}
               </h2>
 
-              <button
+              {/* ✅ MOVED BUTTON */}
+              <motion.button
+                whileTap={isLive ? { scale: 0.9 } : {}}
+                whileHover={isLive ? { scale: 1.05 } : {}}
                 disabled={!isLive}
                 onClick={() => {
                   setSelectedSlot(slot);
                   setPlayModalOpen(true);
                 }}
-                className="p-2 bg-yellow-400 rounded-full"
+                className="p-2 rounded-full bg-gradient-gold text-black"
               >
-                <Play size={14} />
-              </button>
+                <Play className="h-4 w-4" />
+              </motion.button>
             </div>
           </div>
         );
       })}
 
-      {/* Play Modal */}
+      {/* ✅ CENTER MODAL */}
       <AnimatePresence>
         {playModalOpen && selectedSlot && (
-          <motion.div className="fixed inset-0 bg-black/60 flex items-end p-4">
-            <div className="bg-black p-4 rounded-xl w-full">
-              <h2 className="text-white mb-3">Select Number</h2>
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setPlayModalOpen(false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[hsl(220,20%,10%)] p-5"
+            >
+              <h2 className="mb-4 text-lg font-bold text-white">
+                Select Number
+              </h2>
 
-              <div className="grid grid-cols-10 gap-1">
+              <div className="grid grid-cols-10 gap-1.5">
                 {Array.from(
                   {
                     length:
@@ -191,6 +208,7 @@ const HomePage = () => {
                   },
                   (_, i) => {
                     const num = selectedSlot.numberRange.start + i;
+
                     return (
                       <button
                         key={num}
@@ -199,20 +217,20 @@ const HomePage = () => {
                           setPlayModalOpen(false);
                           setBetConfirmOpen(true);
                         }}
-                        className="text-white text-xs p-2 bg-white/10 rounded"
+                        className="aspect-square rounded-lg bg-white/5 text-xs font-bold text-white/60 hover:bg-white/10"
                       >
-                        {num}
+                        {String(num).padStart(2, "0")}
                       </button>
                     );
                   },
                 )}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Bet Modal */}
+      {/* ORIGINAL BET MODAL untouched */}
       <AnimatePresence>
         {betConfirmOpen && selectedNumber !== null && (
           <div className="fixed inset-0 bg-black/60 flex items-end p-4">
