@@ -294,85 +294,61 @@ const HomePage = () => {
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
-              isLive
-                ? "border-primary/40 bg-gradient-to-br from-[hsl(42,92%,25%)] to-[hsl(220,20%,12%)] shadow-[0_0_20px_rgba(255,200,0,0.2)]"
-                : isUpcoming
-                  ? "border-yellow-500/30 bg-[hsl(220,20%,12%)]"
-                  : isClosed
-                    ? "border-red-500/30 bg-[hsl(220,20%,10%)] opacity-70"
-                    : "border-blue-500/30 bg-[hsl(220,20%,10%)] opacity-70"
-            }`}
+            className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
           >
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
-                      isLive
-                        ? "bg-green-500/20 text-green-400"
-                        : isUpcoming
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : isClosed
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-blue-500/20 text-blue-400"
-                    }`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        isLive
-                          ? "bg-green-400"
-                          : isUpcoming
-                            ? "bg-yellow-400"
-                            : isClosed
-                              ? "bg-red-400"
-                              : "bg-blue-400"
+            {/* Top section */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                {/* Status row */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className={`h-2 w-2 rounded-full ${isLive
+                      ? "bg-primary animate-pulse"
+                      : isUpcoming
+                        ? "bg-amber-400"
+                        : isClosed
+                          ? "bg-red-400"
+                          : "bg-blue-400"
                       }`}
-                    />
-
-                    <span className="text-xs font-bold">
-                      {isLive && "LIVE"}
-                      {isUpcoming && "UPCOMING"}
-                      {isClosed && "CLOSED"}
-                      {isResult && "RESULT"}
-                    </span>
-                  </div>
+                  />
+                  <p
+                    className={`text-xs uppercase tracking-[0.1em] ${isLive
+                      ? "text-primary"
+                      : isUpcoming
+                        ? "text-amber-400/80"
+                        : isClosed
+                          ? "text-red-400"
+                          : "text-blue-400"
+                      }`}
+                  >
+                    {isLive && "LIVE"}
+                    {isUpcoming && `⏳ Opens at ${new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                    {isClosed && "CLOSED"}
+                    {isResult && "RESULT DECLARED"}
+                  </p>
                 </div>
 
-                {isSelected && isLive && (
-                  <div className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-mono text-lg font-bold text-primary">
-                      {timeLeft || "--:--"}
+                {/* Game name */}
+                <h2 className="text-xl font-bold text-white font-display">
+                  {slot.windowLabel}
+                </h2>
+
+                {/* Subtext */}
+                {isLive && (
+                  <p className="mt-1 text-sm text-white/50">
+                    Bet{" "}
+                    <span className="font-bold text-primary">
+                      {slot.betAmount ?? "--"} rupees
+                    </span>{" "}
+                    · Win{" "}
+                    <span className="font-bold text-green-400">
+                      {slot.winAmount ?? "--"} rupees
                     </span>
-                  </div>
+                  </p>
                 )}
-              </div>
-
-              <h2 className="text-lg font-bold text-white font-display">
-                {slot.windowLabel}
-              </h2>
-
-              <div className="mt-1 text-sm text-white/50">
-                Bet{" "}
-                <span className="font-bold text-primary">
-                  {slot.betAmount ?? "--"} rupees
-                </span>{" "}
-                · Win{" "}
-                <span className="font-bold text-green-400">
-                  {slot.winAmount ?? "--"} rupees
-                </span>
-                {isResult &&
-                  slot.winningNumber !== null &&
-                  slot.winningNumber !== undefined && (
-                    <p className="mt-1 text-xs font-bold text-primary">
-                      Winning Number: #
-                      {String(slot.winningNumber).padStart(2, "0")}
-                    </p>
-                  )}
                 {isUpcoming && (
-                  <p className="mt-1 text-xs text-yellow-400">
-                    Starts at{" "}
+                  <p className="mt-1 text-sm text-white/40">
+                    Bidding starts at{" "}
                     {new Date(slot.startTime).toLocaleTimeString([], {
                       hour: "numeric",
                       minute: "2-digit",
@@ -380,34 +356,75 @@ const HomePage = () => {
                   </p>
                 )}
                 {isClosed && !isResult && (
-                  <p className="mt-1 text-xs text-red-400">
-                    Result will be declared in 5 minutes after close.
+                  <p className="mt-1 text-sm text-red-400/70">
+                    Result in 5 minutes after close
+                  </p>
+                )}
+                {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
+                  <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-primary">
+                    #{String(slot.winningNumber).padStart(2, "0")}
                   </p>
                 )}
               </div>
+
+              {/* Timer (when selected & live) + Play button */}
+              <div className="flex flex-col items-end gap-2 ml-3">
+                <div className="flex items-center gap-2">
+                  {isSelected && isLive && (
+                    <div className="flex items-center gap-1.5 rounded-full bg-black/30 px-4 py-3">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      <span className="font-mono text-sm font-bold text-primary">
+                        {timeLeft || "--:--"}
+                      </span>
+                    </div>
+                  )}
+                  <motion.button
+                    whileTap={isLive && !slot.isPlaceholder ? { scale: 0.95 } : {}}
+                    whileHover={isLive && !slot.isPlaceholder ? { scale: 1.03 } : {}}
+                    disabled={!isLive || slot.isPlaceholder}
+                    onClick={() => {
+                      if (isLive && !slot.isPlaceholder) {
+                        setSelectedSlot(isSelected ? null : slot);
+                      }
+                    }}
+                    className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition ${isLive && !slot.isPlaceholder
+                    ? isSelected
+                        ? "border-white/20 bg-white/10 text-white/60"
+                        : "border-white/20 bg-gradient-gold text-black shadow-[0_0_12px_rgba(255,200,0,0.3)]"
+                      : "border-white/10 bg-white/5 text-white/20 cursor-not-allowed"
+                      }`}
+                  >
+                    <span className="text-xs">▶</span>
+                    {isSelected && isLive ? "Close" : "Play"}
+                  </motion.button>
+                </div>
+              </div>
             </div>
 
-            {/* Play Button — only button is clickable, nothing else */}
-            <div className="mt-4 flex items-center justify-end">
-              <motion.button
-                whileTap={isLive && !slot.isPlaceholder ? { scale: 0.95 } : {}}
-                whileHover={isLive && !slot.isPlaceholder ? { scale: 1.03 } : {}}
-                disabled={!isLive || slot.isPlaceholder}
-                onClick={() => {
-                  if (isLive && !slot.isPlaceholder) {
-                    setSelectedSlot(isSelected ? null : slot);
-                  }
-                }}
-                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition-all ${isLive && !slot.isPlaceholder
-                    ? isSelected
-                      ? "bg-white/10 text-white/60"
-                      : "bg-gradient-gold text-black shadow-[0_0_12px_rgba(255,200,0,0.3)]"
-                    : "cursor-not-allowed bg-white/5 text-white/20"
-                  }`}
-              >
-                {isSelected && isLive ? "Close" : "Play"}
-              </motion.button>
+            {/* Footer: Open / Close times */}
+            <div className="mt-4 flex gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
+              <span>
+                OPEN:{" "}
+                <span className="text-white/80">
+                  {new Date(slot.startTime).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </span>
+              <span className="text-white/20">|</span>
+              <span>
+                CLOSE:{" "}
+                <span className="text-white/80">
+                  {new Date(slot.endTime).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </span>
             </div>
+
+            {/* Number grid (expanded when selected) */}
             <AnimatePresence>
               {isSelected && (
                 <motion.div
@@ -439,13 +456,12 @@ const HomePage = () => {
                               setBetConfirmOpen(true);
                             }}
                             disabled={isDisabled}
-                            className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${
-                              isDisabled
+                            className={`relative aspect-square rounded-lg text-xs font-bold transition-all ${isDisabled
                                 ? "cursor-not-allowed bg-white/5 text-white/20"
                                 : isMyBet
                                   ? "bg-primary/20 text-primary ring-1 ring-primary/40"
                                   : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-                            }`}
+                              }`}
                           >
                             {String(num).padStart(2, "0")}
                             {isMyBet && (
