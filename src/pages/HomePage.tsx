@@ -58,7 +58,7 @@ const HomePage = () => {
   const [allSlots, setAllSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [betting, setBetting] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [betConfirmOpen, setBetConfirmOpen] = useState(false);
@@ -251,20 +251,20 @@ const HomePage = () => {
       })
     : [];
 
-  if (loading) {
-    return (
-      <div className="flex h-[80vh] flex-col items-center justify-center gap-3">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold"
-        >
-          <Target className="h-8 w-8 text-[hsl(220,20%,7%)]" />
-        </motion.div>
-        <p className="text-sm text-white/40">Loading game...</p>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex h-[80vh] flex-col items-center justify-center gap-3">
+  //       <motion.div
+  //         animate={{ rotate: 360 }}
+  //         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+  //         className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold"
+  //       >
+  //         <Target className="h-8 w-8 text-[hsl(220,20%,7%)]" />
+  //       </motion.div>
+  //       <p className="text-sm text-white/40">Loading game...</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-4 p-4 pb-28">
