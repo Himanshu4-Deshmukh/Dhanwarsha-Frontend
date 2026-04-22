@@ -306,6 +306,7 @@ const HomePage = () => {
             key={slot._id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
             className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
           >
             {/* Top section */}
