@@ -58,7 +58,7 @@ const HomePage = () => {
   const [allSlots, setAllSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [betting, setBetting] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [betConfirmOpen, setBetConfirmOpen] = useState(false);
@@ -137,14 +137,6 @@ const HomePage = () => {
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, [fetchData]);
-
-  // const slots = useMemo(() => {
-  //   return allSlots.map((slot) => ({
-  //     ...slot,
-  //     displayLabel: slot.windowLabel,
-  //     isPlaceholder: !!slot.isPlaceholder,
-  //   }));
-  // }, [allSlots]);
 
   const slots = useMemo(() => {
     return [...allSlots]
@@ -251,20 +243,20 @@ const HomePage = () => {
       })
     : [];
 
-  // if (loading) {
-  //   return (
-  //     <div className="flex h-[80vh] flex-col items-center justify-center gap-3">
-  //       <motion.div
-  //         animate={{ rotate: 360 }}
-  //         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-  //         className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold"
-  //       >
-  //         <Target className="h-8 w-8 text-[hsl(220,20%,7%)]" />
-  //       </motion.div>
-  //       <p className="text-sm text-white/40">Loading game...</p>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center gap-3">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold"
+        >
+          <Target className="h-8 w-8 text-[hsl(220,20%,7%)]" />
+        </motion.div>
+        <p className="text-sm text-white/40">Loading game...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4 pb-28">
@@ -302,11 +294,11 @@ const HomePage = () => {
         const isDisabled = !isLive || slot.isPlaceholder;
 
         return (
-          <motion.div
+          <div
             key={slot._id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+            // initial={{ opacity: 0, y: 10 }}
+            // animate={{ opacity: 1, y: 0 }}
+            // transition={{ duration: 0.2 }}
             className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
           >
             {/* Top section */}
@@ -490,7 +482,7 @@ const HomePage = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         );
       })}
 
