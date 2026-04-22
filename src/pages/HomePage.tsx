@@ -291,7 +291,6 @@ const HomePage = () => {
         return (
           <motion.div
             key={slot._id}
-            layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-3xl border border-white/10 bg-[hsl(220,20%,10%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
@@ -428,9 +427,10 @@ const HomePage = () => {
             <AnimatePresence>
               {isSelected && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
                   className="mt-4"
                 >
                   <div className="grid grid-cols-10 gap-1.5">
