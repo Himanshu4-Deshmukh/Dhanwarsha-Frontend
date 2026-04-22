@@ -170,11 +170,24 @@ const HomePage = () => {
     }
   }, [allSlots, isLiveSlot, selectedSlot]);
 
+  const liveSlot = useMemo(() => {
+    return slots.find((slot) => {
+      const now = Date.now();
+      const start = new Date(slot.startTime).getTime();
+      const end = new Date(slot.endTime).getTime();
+      return slot.status === "OPEN" && now >= start && now < end;
+    });
+  }, [slots]);
+
   useEffect(() => {
-    if (!selectedSlot?.endTime) return;
+    const endTime = liveSlot?.endTime;
+    if (!endTime) {
+      setTimeLeft("");
+      return;
+    }
 
     const update = () => {
-      const diff = new Date(selectedSlot.endTime).getTime() - Date.now();
+      const diff = new Date(endTime).getTime() - Date.now();
       if (diff <= 0) {
         setTimeLeft("CLOSING");
         return;
@@ -189,7 +202,7 @@ const HomePage = () => {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [selectedSlot]);
+  }, [liveSlot?.endTime]);
 
   const placeBet = async () => {
     if (selectedNumber === null || !selectedSlot) return;
@@ -369,14 +382,6 @@ const HomePage = () => {
               {/* Timer (when selected & live) + Play button */}
               <div className="flex flex-col items-end gap-2 ml-3">
                 <div className="flex items-center gap-2">
-                  {isSelected && isLive && (
-                    <div className="flex items-center gap-1.5 rounded-full bg-black/30 px-4 py-3">
-                      <Clock className="h-3.5 w-3.5 text-primary" />
-                      <span className="font-mono text-sm font-bold text-primary">
-                        {timeLeft || "--:--"}
-                      </span>
-                    </div>
-                  )}
                   <motion.button
                     whileTap={isLive && !slot.isPlaceholder ? { scale: 0.95 } : {}}
                     whileHover={isLive && !slot.isPlaceholder ? { scale: 1.03 } : {}}
@@ -400,29 +405,38 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Footer: Open / Close times */}
-            <div className="mt-4 flex gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
-              <span>
-                OPEN:{" "}
-                <span className="text-white/80">
-                  {new Date(slot.startTime).toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+            {/* Footer: Open / Close times + Timer */}
+            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/50">
+              <div className="flex items-center gap-3">
+                <span>
+                  OPEN:{" "}
+                  <span className="text-white/80">
+                    {new Date(slot.startTime).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </span>
-              </span>
-              <span className="text-white/20">|</span>
-              <span>
-                CLOSE:{" "}
-                <span className="text-white/80">
-                  {new Date(slot.endTime).toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                <span className="text-white/20">|</span>
+                <span>
+                  CLOSE:{" "}
+                  <span className="text-white/80">
+                    {new Date(slot.endTime).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </span>
-              </span>
+              </div>
+              {isLive && (
+                <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-black/30 px-3 py-1.5">
+                  <Clock className="h-3 w-3 text-primary" />
+                  <span className="font-mono text-xs font-bold text-primary">
+                    {timeLeft || "--:--"}
+                  </span>
+                </div>
+              )}
             </div>
-
             {/* Number grid (expanded when selected) */}
             <AnimatePresence>
               {isSelected && (
