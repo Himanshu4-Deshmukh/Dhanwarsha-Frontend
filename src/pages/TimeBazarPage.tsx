@@ -964,19 +964,24 @@ const TimeBazarPage = () => {
                   {GAME_TYPES.map((type) => {
                     const time =
                       type.key === "open" ? modalOpenTime : modalCloseTime;
+                    const isOpenDeclared =
+                      type.key === "open" && !!selectedResult?.openNumber?.trim();
                     return (
                       <button
                         key={type.key}
                         type="button"
+                        disabled={isOpenDeclared}
                         onClick={() => {
+                          if (isOpenDeclared) return;
                           setGameType(type.key);
                           setModalStage("betting");
                         }}
-                        className={`rounded-3xl border p-5 text-left transition ${
-                          gameType === type.key
+                        className={`rounded-3xl border p-5 text-left transition ${isOpenDeclared
+                          ? "cursor-not-allowed border-white/5 bg-white/5 opacity-40"
+                          : gameType === type.key
                             ? "border-primary bg-primary/10 text-white"
                             : "border-white/10 text-white/70"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold">
