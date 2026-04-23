@@ -566,15 +566,28 @@ const TimeBazarPage = () => {
           const latestFetchedAt =
             result?.fetchedAt ?? draw.latestResult?.fetchedAt;
 
+          const isResultFromToday = (() => {
+            if (!latestFetchedAt) return false;
+            const fetched = new Date(latestFetchedAt);
+            const gameStart = new Date(draw.startTime);
+            return (
+              fetched.getFullYear() === gameStart.getFullYear() &&
+              fetched.getMonth() === gameStart.getMonth() &&
+              fetched.getDate() === gameStart.getDate()
+            );
+          })();
+
           let rawNumber = "***-**-***";
 
           if (!isLiveStatus) {
             rawNumber = latestRaw || "***-**-***";
+          } else if (!isResultFromToday) {
+            rawNumber = "***-**-***"; // stale result from previous day
           } else {
             if (/^\d{3}-\d{2}-\d{3}$/.test(latestRaw)) {
-              rawNumber = latestRaw; // full result
+              rawNumber = latestRaw;
             } else if (/^\d{3}-\d$/.test(latestRaw)) {
-              rawNumber = `${latestRaw}*-***`; // partial result
+              rawNumber = `${latestRaw}*-***`;
             } else {
               rawNumber = "***-**-***";
             }
