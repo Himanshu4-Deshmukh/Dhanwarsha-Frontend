@@ -431,10 +431,11 @@ const HomePage = () => {
               )}
               {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/50">Winning Number:</span>
+                  {/* <span className="text-xs text-white/50">Winning Number:</span>
                   <span className="text-sm font-bold text-primary ">
                     {String(slot.winningNumber).padStart(2, "0")}
-                  </span>
+                  </span> */}
+                  <span className="text-sm font-bold text-primary "> 🏆Result: {String(slot.winningNumber ?? "??").padStart(2, "0")} </span>
                 </div>
               )}
             </div>
