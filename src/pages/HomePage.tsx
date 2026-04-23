@@ -365,11 +365,11 @@ const HomePage = () => {
                     Result in 5 minutes after close
                   </p>
                 )}
-                {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
+                {/* {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
                   <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-primary">
                     #{String(slot.winningNumber).padStart(2, "0")}
                   </p>
-                )}
+                )} */}
               </div>
 
               {/* Timer (when selected & live) + Play button */}
@@ -426,6 +426,14 @@ const HomePage = () => {
                   <Clock className="h-3 w-3 text-primary" />
                   <span className="font-mono text-xs font-bold text-primary">
                     {timeLeft || "--:--"}
+                  </span>
+                </div>
+              )}
+              {isResult && slot.winningNumber !== null && slot.winningNumber !== undefined && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/50">Winning Number:</span>
+                  <span className="text-sm font-bold text-primary ">
+                    {String(slot.winningNumber).padStart(2, "0")}
                   </span>
                 </div>
               )}
