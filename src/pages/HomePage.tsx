@@ -539,7 +539,7 @@ const HomePage = () => {
                 />
               </div>
 
-              <p className="mb-4 text-center text-sm text-white/50">
+              {/* <p className="mb-4 text-center text-sm text-white/50">
                 Cost: {customBetAmount} rupees
                 <br />
                 Win:{" "}
@@ -547,7 +547,20 @@ const HomePage = () => {
                   ((selectedSlot.winAmount || 900) /
                     (selectedSlot.betAmount || 10))}{" "}
                 rupees
-              </p>
+              </p> */}
+              <div className="mb-4 mx-3 flex items-center justify-between">
+                <div className="text-left">
+                  <p className="text-xs text-white/40">Cost</p>
+                  <p className="text-sm font-bold text-white">{customBetAmount} rupees</p>
+                </div>
+                <div className="text-white/20">→</div>
+                <div className="text-right">
+                  <p className="text-xs text-white/40">Win</p>
+                  <p className="text-sm font-bold text-green-400">
+                    {customBetAmount * ((selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10))} rupees
+                  </p>
+                </div>
+              </div>
 
               <button
                 onClick={placeBet}
