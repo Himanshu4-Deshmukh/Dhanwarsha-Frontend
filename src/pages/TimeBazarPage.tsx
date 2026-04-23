@@ -977,8 +977,20 @@ const TimeBazarPage = () => {
                   {GAME_TYPES.map((type) => {
                     const time =
                       type.key === "open" ? modalOpenTime : modalCloseTime;
+                    const isResultFromToday = (() => {
+                      const fetchedAt = selectedResult?.fetchedAt ?? selectedDraw?.latestResult?.fetchedAt;
+                      if (!fetchedAt) return false;
+                      const fetched = new Date(fetchedAt);
+                      const gameStart = new Date(selectedDraw?.startTime ?? "");
+                      return (
+                        fetched.getFullYear() === gameStart.getFullYear() &&
+                        fetched.getMonth() === gameStart.getMonth() &&
+                        fetched.getDate() === gameStart.getDate()
+                      );
+                    })();
+
                     const isOpenDeclared =
-                      type.key === "open" && !!selectedResult?.openNumber?.trim();
+                      type.key === "open" && isResultFromToday && !!selectedResult?.openNumber?.trim();
                     return (
                       <button
                         key={type.key}
