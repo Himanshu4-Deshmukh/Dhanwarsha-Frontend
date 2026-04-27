@@ -62,13 +62,6 @@ export function UserDetailsModal({
     return null;
   }
 
-  const initials = user.name
-    ?.split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
     <AnimatePresence>
       {open && (
@@ -102,24 +95,19 @@ export function UserDetailsModal({
             <div className="grid gap-6 p-5 sm:px-6 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-6">
                 <div className="rounded-3xl border border-white/8 bg-gradient-to-br from-[hsl(220,18%,14%)] via-[hsl(220,18%,11%)] to-[hsl(220,20%,9%)] p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary via-amber-300 to-yellow-500 text-2xl font-bold text-[hsl(220,20%,7%)] shadow-[0_12px_32px_rgba(245,166,35,0.28)]">
-                      {initials || 'U'}
+                  <div className="min-w-0">
+                    <p className="text-2xl font-bold text-white">{user.name}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/45">
+                      <Mail className="h-4 w-4" />
+                      <span className="truncate">{user.email}</span>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-2xl font-bold text-white">{user.name}</p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/45">
-                        <Mail className="h-4 w-4" />
-                        <span className="truncate">{user.email}</span>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.role === 'ADMIN' ? 'bg-purple-500/15 text-purple-300' : 'bg-blue-500/15 text-blue-300'}`}>
-                          {user.role}
-                        </span>
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.isActive ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
-                          {user.isActive ? 'Active' : 'Blocked'}
-                        </span>
-                      </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.role === 'ADMIN' ? 'bg-purple-500/15 text-purple-300' : 'bg-blue-500/15 text-blue-300'}`}>
+                        {user.role}
+                      </span>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.isActive ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
+                        {user.isActive ? 'Active' : 'Blocked'}
+                      </span>
                     </div>
                   </div>
 

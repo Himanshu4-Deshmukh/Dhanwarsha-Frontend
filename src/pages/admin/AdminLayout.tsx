@@ -28,6 +28,7 @@ const navItems = [
   { to: "/admin/users", label: "Users", icon: Users, end: false, dotKey: null },
   { to: "/admin/payments", label: "Payments", icon: CreditCard, end: false, dotKey: null },
   { to: "/admin/bets", label: "All Bets", icon: TrendingUp, end: false, dotKey: null },
+  { to: "/", label: "Go Home", icon: TrendingUp, end: false, dotKey: null },
   { to: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpFromLine, end: false, dotKey: "withdrawals" },
 ];
 
