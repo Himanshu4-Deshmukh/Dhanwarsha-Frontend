@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Dice1,
   ArrowUpFromLine,
+  Ticket,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/lib/api";
@@ -25,6 +26,7 @@ const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, dotKey: null },
   { to: "/admin/slots", label: "Today Slots", icon: Layers, end: false, dotKey: null },
   { to: "/admin/past-slots", label: "Past Slots", icon: History, end: false, dotKey: null },
+  { to: "/admin/lottery", label: "Lottery", icon: Ticket, end: false, dotKey: null },
   { to: "/admin/users", label: "Users", icon: Users, end: false, dotKey: null },
   { to: "/admin/payments", label: "Payments", icon: CreditCard, end: false, dotKey: null },
   { to: "/admin/bets", label: "All Bets", icon: TrendingUp, end: false, dotKey: null },

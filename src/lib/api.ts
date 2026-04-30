@@ -89,6 +89,54 @@ export type PaymentConfig = {
   upiName: string;
 };
 
+export type LotteryStatus = "UPCOMING" | "OPEN" | "CLOSED" | "RESULT_DECLARED";
+
+export type LotteryConfig = {
+  ticketPrice: number;
+  winAmount: number;
+  ticketCount: number;
+  ticketDigits: number;
+  openTime: string;
+  closeTime: string;
+  resultTime: string;
+};
+
+export type LotteryNumber = {
+  number: string;
+  purchaseCount: number;
+};
+
+export type LotteryRound = {
+  _id: string;
+  dateKey: string;
+  status: LotteryStatus;
+  openTime: string;
+  closeTime: string;
+  resultDeclarationTime: string;
+  ticketPrice: number;
+  winAmount: number;
+  ticketCount: number;
+  ticketDigits: number;
+  numbers: LotteryNumber[];
+  totalPurchases: number;
+  totalSales: number;
+  winningNumber?: string;
+  declaredAt?: string;
+  resultMode?: "MANUAL" | "AUTO";
+  autoSelectedReason?: string;
+};
+
+export type LotteryPurchase = {
+  _id: string;
+  dateKey: string;
+  number: string;
+  amount: number;
+  payout?: number;
+  status: "PENDING" | "WON" | "LOST";
+  createdAt: string;
+  roundId?: string | { _id?: string; dateKey?: string };
+};
+
 export const api = {
   // Auth
   login: (email: string, password: string) =>
@@ -158,6 +206,23 @@ export const api = {
       `/live-draws/bets/my${toQueryString({ game: gameKey })}`,
     ),
 
+  // Lottery
+  getLotteryConfig: () => request<LotteryConfig>("/lottery/config"),
+  getLotteryToday: () => request<LotteryRound>("/lottery/today"),
+  getLotteryHistory: (limit = 12) =>
+    request<LotteryRound[]>(`/lottery/history${toQueryString({ limit })}`),
+  getMyLotteryPurchases: (limit = 50) =>
+    request<LotteryPurchase[]>(
+      `/lottery/my/purchases${toQueryString({ limit })}`,
+    ),
+  getMyLotteryWins: (limit = 50) =>
+    request<LotteryPurchase[]>(`/lottery/my/wins${toQueryString({ limit })}`),
+  buyLotteryTicket: (number: string) =>
+    request<any>("/lottery/purchase", {
+      method: "POST",
+      body: JSON.stringify({ number }),
+    }),
+
   // Bets
   placeBet: (slotId: string, number: string, amount: number) =>
     request<any>("/bets", {
@@ -199,6 +264,26 @@ export const api = {
     getUserById: (userId: string) => request<any>(`/users/${userId}`),
     getAllBets: () => request<any[]>("/admin/bets"),
     getAllTransactions: () => request<any[]>("/admin/transactions"),
+    getLotteryToday: () => request<LotteryRound>("/lottery/admin/today"),
+    updateLotteryConfig: (ticketPrice?: number, winAmount?: number) =>
+      request<LotteryConfig>("/lottery/admin/config", {
+        method: "PATCH",
+        body: JSON.stringify({ ticketPrice, winAmount }),
+      }),
+    preselectLotteryWinningNumber: (roundId: string, winningNumber: string) =>
+      request<LotteryRound>(`/lottery/admin/rounds/${roundId}/winning-number`, {
+        method: "PATCH",
+        body: JSON.stringify({ winningNumber }),
+      }),
+    declareLotteryResult: (roundId: string, winningNumber?: string) =>
+      request<LotteryRound>(`/lottery/admin/rounds/${roundId}/declare`, {
+        method: "POST",
+        body: JSON.stringify(winningNumber ? { winningNumber } : {}),
+      }),
+    getLotteryExposure: (roundId: string) =>
+      request<
+        Array<{ number: string; purchaseCount: number; totalAmount: number }>
+      >(`/lottery/admin/rounds/${roundId}/exposure`),
 
     // Payments
     getAllPaymentRequests: () => request<any[]>("/admin/payment-requests"),

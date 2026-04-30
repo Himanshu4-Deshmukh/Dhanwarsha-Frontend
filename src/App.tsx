@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import TimeBazarPage from "./pages/TimeBazarPage";
+import LotteryPage from "./pages/LotteryPage";
 import WalletPage from "./pages/WalletPage";
 import BetsPage from "./pages/BetsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -20,6 +21,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminBets from "./pages/admin/AdminBets";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+import AdminLottery from "./pages/admin/AdminLottery";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -56,6 +58,7 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/time-bazar" element={<TimeBazarPage />} />
+          <Route path="/lottery" element={<LotteryPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/bets" element={<BetsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
@@ -91,6 +94,7 @@ const App = () => (
               <Route path="payments" element={<AdminPayments />} />
               <Route path="bets" element={<AdminBets />} />
               <Route path="withdrawals" element={<AdminWithdrawals />} />
+              <Route path="lottery" element={<AdminLottery />} />
             </Route>
             <Route path="/*" element={<AppLayout />} />
           </Routes>

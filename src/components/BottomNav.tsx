@@ -6,6 +6,7 @@ import {
   User,
   ShieldCheck,
   Sparkles,
+  Ticket,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
@@ -13,6 +14,7 @@ import { motion } from "framer-motion";
 const baseTabs = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/time-bazar", icon: Sparkles, label: "Matka King" },
+  { path: "/lottery", icon: Ticket, label: "Lottery" },
   { path: "/wallet", icon: Wallet, label: "Wallet" },
   { path: "/bets", icon: Trophy, label: "Bets" },
   { path: "/profile", icon: User, label: "Profile" },
