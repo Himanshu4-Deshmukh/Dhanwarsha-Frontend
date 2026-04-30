@@ -148,7 +148,7 @@
 //               Daily lottery
 //             </p>
 //             <h1 className="mt-1 text-2xl font-bold text-white">
-//               Lucky Spin Lottery
+//               Lucky Lottery
 //             </h1>
 //             <p className="mt-2 max-w-md text-sm text-white/55">
 //               Pick one of the daily 6-digit entries, pay from your wallet, and
@@ -701,7 +701,7 @@ function LotteryTicketCard({
             <div className="flex items-center gap-1.5">
               <div className={`h-2 w-2 rounded-full ${palette.dot}`} />
               <span className="text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
-                Lucky Spin
+                Lucky
               </span>
             </div>
             {hot && (
@@ -892,7 +892,7 @@ export default function LotteryPage() {
               Daily lottery
             </p>
             <h1 className="mt-1 text-2xl font-bold text-white">
-              Lucky Spin Lottery
+              Lucky Lottery
             </h1>
             <p className="mt-2 max-w-md text-sm text-white/55">
               Pick one of the daily 6-digit entries, pay from your wallet, and
