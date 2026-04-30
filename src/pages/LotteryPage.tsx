@@ -409,8 +409,8 @@ export default function LotteryPage() {
             <h1 className="mt-0.5 text-lg font-semibold text-white">
               Lucky Spin Lottery
             </h1>
-            <p className="mt-1 max-w-xs text-xs text-white/50 leading-snug">
-              Pick a 6-digit number and wait for the 10 PM result.
+            <p className="mt-1 text-xs text-white/50 leading-snug whitespace-nowrap">
+              Pick a lottery number and wait for the 10 PM result.
             </p>
           </div>
 
