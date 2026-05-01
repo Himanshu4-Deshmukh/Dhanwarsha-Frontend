@@ -1,7 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
-  Wallet,
   Trophy,
   User,
   ShieldCheck,
@@ -12,11 +11,10 @@ import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 
 const baseTabs = [
-  { path: "/", icon: Home, label: "Home" },
+  { path: "/", icon: Home, label: "9 to 9" },
   { path: "/time-bazar", icon: Sparkles, label: "Matka King" },
+  { path: "/sports", icon: Trophy, label: "Sports" },
   { path: "/lottery", icon: Ticket, label: "Lottery" },
-  { path: "/wallet", icon: Wallet, label: "Wallet" },
-  { path: "/bets", icon: Trophy, label: "Bets" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
 

@@ -23,6 +23,7 @@ import AdminBets from "./pages/admin/AdminBets";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import AdminLottery from "./pages/admin/AdminLottery";
 import { Loader2 } from "lucide-react";
+import SportsPage from "./pages/SportsPage";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/time-bazar" element={<TimeBazarPage />} />
+          <Route path="/sports" element={<SportsPage />} />
           <Route path="/lottery" element={<LotteryPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/bets" element={<BetsPage />} />
