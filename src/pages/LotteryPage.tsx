@@ -191,13 +191,14 @@ function LotteryTicketCard({
               <p className="text-[7px] uppercase tracking-[0.2em] text-white/30">Price</p>
               <p className="font-mono text-xs font-bold text-white">₹{ticketPrice}</p>
             </div>
+            <div className="h-6 w-px bg-white/10" />
             <div>
               <p className="text-[7px] uppercase tracking-[0.2em] text-white/30">Sold</p>
               <p className="font-mono text-xs font-bold text-white/60">{entry.purchaseCount}</p>
             </div>
             {/* Mini barcode */}
             <div className="flex items-end gap-[1.5px] h-4">
-              {Array.from({ length: 14 }, (_, i) => (
+              {Array.from({ length: 10 }, (_, i) => (
                 <div
                   key={i}
                   className="bg-white/20 rounded-[1px]"
