@@ -167,14 +167,7 @@ const AuthPage = () => {
               )}
             </button>
           </form>
-
-          {isLogin && (
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Admin? Use{" "}
-              <span className="font-mono text-primary">admin@example.com</span>
-            </p>
-          )}
-
+              
           <div className="mt-6 text-center">
             <Link
               to="/install"
