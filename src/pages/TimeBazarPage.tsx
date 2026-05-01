@@ -646,7 +646,7 @@ const TimeBazarPage = () => {
                           <h2 className="text-xl font-bold text-white">
                             {draw.gameName}
                           </h2>
-                          <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-white">
+                          <p className="mt-1 font-mono text-xl font-bold tracking-wide text-white">
                             {rawNumber}
                           </p>
                         </>
@@ -665,7 +665,7 @@ const TimeBazarPage = () => {
                         <h2 className="text-xl font-bold text-white">
                           {draw.gameName}
                         </h2>
-                        <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-white">
+                        <p className="mt-1 font-mono text-xl font-bold tracking-wide text-white">
                           {rawNumber}
                         </p>
                       </>
@@ -717,7 +717,7 @@ const TimeBazarPage = () => {
                   <h2 className="text-xl font-bold text-white">
                     {result.gameName}
                   </h2>
-                  <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">
+                  <p className="mt-1 font-mono text-xl font-bold tracking-widest text-white">
                     {result.rawNumber ?? "***-**-***"}
                   </p>
                 </div>
