@@ -149,8 +149,8 @@ function LotteryTicketCard({
         />
 
         {/* Top half */}
-        <div className="px-3 pt-3 pb-2">
-          <div className="flex items-center justify-between mb-2">
+        <div className="px-2.5 pt-2.5 pb-1.5">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1">
               <div className={`h-1.5 w-1.5 rounded-full ${palette.dot}`} />
               <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-white/40">Lucky</span>
@@ -170,8 +170,8 @@ function LotteryTicketCard({
           </div>
 
           <div>
-            <p className="text-[7px] uppercase tracking-[0.25em] text-white/30 mb-0.5">Ticket No.</p>
-            <p className={`font-mono text-2xl font-black tracking-[0.12em] ${palette.accent}`}>
+            <p className="text-[7px] uppercase tracking-[0.25em] text-white/30">Ticket No.</p>
+            <p className={`font-mono text-xl font-black tracking-[0.1em] ${palette.accent}`}>
               {entry.number}
             </p>
           </div>
@@ -179,13 +179,13 @@ function LotteryTicketCard({
 
         {/* Tear line */}
         <div className="relative flex items-center px-2">
-          <div className="absolute -left-2.5 h-5 w-5 rounded-full bg-black/60" />
+          <div className="absolute -left-2 h-4 w-4 rounded-full bg-black/60" />
           <PerforatedLine />
-          <div className="absolute -right-2.5 h-5 w-5 rounded-full bg-black/60" />
+          <div className="absolute -right-2 h-4 w-4 rounded-full bg-black/60" />
         </div>
 
         {/* Stub */}
-        <div className="px-3 py-2">
+        <div className="px-2.5 py-1.5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[7px] uppercase tracking-[0.2em] text-white/30">Price</p>
@@ -196,7 +196,7 @@ function LotteryTicketCard({
               <p className="font-mono text-xs font-bold text-white/60">{entry.purchaseCount}</p>
             </div>
             {/* Mini barcode */}
-            <div className="flex items-end gap-[1.5px] h-5">
+            <div className="flex items-end gap-[1.5px] h-4">
               {Array.from({ length: 14 }, (_, i) => (
                 <div
                   key={i}
@@ -416,7 +416,7 @@ export default function LotteryPage() {
           <div className="flex items-center justify-between gap-3">
             {/* Left */}
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.35em] text-white/35">Daily Lottery</p>
+              <p className="text-[9px] uppercase tracking-wide text-white/35">Daily Lottery</p>
               <h1 className="mt-0.5 text-base font-bold text-white leading-tight">Lucky Lottery</h1>
             </div>
             {/* Status badge */}
@@ -473,7 +473,7 @@ export default function LotteryPage() {
         <div className="rounded-2xl border border-white/10 bg-[hsl(220,20%,8%)] p-3">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="text-[9px] uppercase tracking-[0.3em] text-white/30">Choose ticket</p>
+              <p className="text-[9px] uppercase tracking-wide text-white/30">Choose ticket</p>
               <h2 className="mt-0.5 text-sm font-semibold text-white">100 numbers daily</h2>
             </div>
             <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/50">
