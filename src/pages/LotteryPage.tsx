@@ -375,8 +375,14 @@ export default function LotteryPage() {
 
   const numbers = useMemo(() => todayRound?.numbers ?? [], [todayRound]);
   const selectedTicket = useMemo(() => numbers.find((e) => e.number === selectedNumber) ?? null, [numbers, selectedNumber]);
+  const todayKey = new Date().toISOString().slice(0, 10);
+
   const purchasedNumbers = useMemo(
-    () => new Set(purchases.map((p) => p.number)),
+    () => new Set(
+      purchases
+        .filter((p) => (p.dateKey ?? p.createdAt?.slice(0, 10)) === todayKey)
+        .map((p) => p.number)
+    ),
     [purchases],
   );
 
@@ -527,17 +533,59 @@ export default function LotteryPage() {
           <AnimatePresence mode="wait">
             {activeTab === "purchases" && (
               <motion.div key="purchases" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-4">
-                <HistoryList
-                  title="My purchases"
-                  emptyText="No lottery tickets purchased yet."
-                  items={purchases}
-                  renderItem={(item) => (
-                    <>
-                      <ListHeader title={item.dateKey || formatDateTime(item.createdAt)} rightLabel={item.status} />
-                      <ListBody leftTitle={item.number} leftSubtitle={`Paid ₹${item.amount}`} rightValue={item.payout ? `+₹${item.payout}` : "–"} rightTone={item.status === "WON" ? "success" : item.status === "LOST" ? "danger" : "normal"} />
-                    </>
-                  )}
-                />
+                {purchases.length === 0 ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-8 text-center text-sm text-white/40">
+                    No lottery tickets purchased yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(
+                      purchases.reduce((groups: Record<string, typeof purchases>, item) => {
+                        const key = item.dateKey ?? item.createdAt?.slice(0, 10) ?? "Unknown";
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(item);
+                        return groups;
+                      }, {})
+                    ).map(([date, items]) => (
+                      <div key={date}>
+                        {/* Date header */}
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="text-[9px] font-bold uppercase tracking-wide text-white/30">{date}</span>
+                          <div className="h-px flex-1 bg-white/8" />
+                          <span className="text-[9px] text-white/20">{items.length} ticket{items.length > 1 ? 's' : ''}</span>
+                        </div>
+
+                        {/* Cards for this date */}
+                        <div className="space-y-1.5">
+                          {items.map((item) => {
+                            const statusColor =
+                              item.status === "WON" ? "text-emerald-400 bg-emerald-400/10 border-emerald-500/20"
+                                : item.status === "LOST" ? "text-red-400 bg-red-400/10 border-red-500/20"
+                                  : "text-amber-400 bg-amber-400/10 border-amber-500/20";
+                            const payoutColor = item.status === "WON" ? "text-emerald-400" : item.status === "LOST" ? "text-red-400" : "text-white/30";
+
+                            return (
+                              <div key={item._id} className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5">
+                                <div className="flex items-center gap-3">
+                                  <p className="font-mono text-sm font-bold text-white">{item.number}</p>
+                                  <span className="text-xs text-white/35">₹{item.amount}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {item.payout ? (
+                                    <span className={`text-xs font-bold ${payoutColor}`}>+₹{item.payout}</span>
+                                  ) : null}
+                                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide ${statusColor}`}>
+                                    {item.status}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
             {activeTab === "wins" && (
@@ -606,7 +654,7 @@ function HistoryList({ title, emptyText, items, renderItem }: { title: string; e
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[9px] uppercase tracking-[0.3em] text-white/30">{title}</p>
+        <p className="text-[9px] uppercase tracking-wide text-white/30">{title}</p>
         <p className="text-xs text-white/30">{items.length} items</p>
       </div>
       {items.length === 0 ? (
