@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 
 const baseTabs = [
-  { path: "/", icon: Home, label: "9 to 9" },
+  { path: "/", icon: Home, label: "Dhanwarsha" },
   { path: "/time-bazar", icon: Sparkles, label: "Matka King" },
   { path: "/sports", icon: Trophy, label: "Sports" },
   { path: "/lottery", icon: Ticket, label: "Lottery" },
