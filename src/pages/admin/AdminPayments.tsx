@@ -14,7 +14,7 @@ import {
 
 // const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api';
 const API_BASE =
-  import.meta.env.VITE_API_URL || "https://dhanwarsha.adonservice.in/api";
+  import.meta.env.VITE_API_URL || "https://dhanwarsha.commercialpropertyhold.in/api";
 const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 
 const resolveScreenshotUrl = (url?: string) => {
