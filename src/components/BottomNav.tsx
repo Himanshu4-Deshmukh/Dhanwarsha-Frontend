@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 const baseTabs = [
   { path: "/", icon: Home, label: "Dhanwarsha" },
   { path: "/time-bazar", icon: Sparkles, label: "Matka King" },
-  { path: "/sports", icon: Trophy, label: "Sports" },
+  // { path: "/sports", icon: Trophy, label: "Sports" },
   { path: "/lottery", icon: Ticket, label: "Lottery" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
