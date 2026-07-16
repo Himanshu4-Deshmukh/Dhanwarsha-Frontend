@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,6 +54,7 @@ const RESULT_DELAY_MS = 5 * 60 * 1000;
 
 const HomePage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [balance, setBalance] = useState<number | null>(null);
   const [allSlots, setAllSlots] = useState<any[]>([]);
@@ -270,7 +272,9 @@ const HomePage = () => {
         </div>
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2"
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate("/wallet")}
+          className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 cursor-pointer"
         >
           <Coins className="h-4 w-4 text-primary" />
           <span className="text-sm font-bold text-primary font-display">

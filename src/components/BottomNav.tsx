@@ -8,7 +8,6 @@ import {
   Ticket,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { motion } from "framer-motion";
 
 const baseTabs = [
   { path: "/", icon: Home, label: "Dhanwarsha" },
@@ -43,12 +42,6 @@ const BottomNav = () => {
               to={path}
               className="flex flex-1 flex-col items-center gap-0.5 py-2.5 relative"
             >
-              {active && (
-                <motion.div
-                  layoutId="bottomNavIndicator"
-                  className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary"
-                />
-              )}
               <Icon
                 className={`h-5 w-5 transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}
               />
