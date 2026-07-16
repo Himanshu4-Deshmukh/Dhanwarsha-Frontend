@@ -124,15 +124,18 @@ function LotteryTicketCard({
 }) {
   const palette = getPalette(entry.number);
   const hot = entry.purchaseCount > 4;
+  const isSold = entry.purchaseCount > 0;
 
   return (
     <button
       type="button"
       disabled={!canPurchase}
       onClick={onSelect}
-      className={`relative w-full text-left transition-all duration-200 focus:outline-none ${!canPurchase
-          ? "cursor-not-allowed opacity-40"
-          : "hover:scale-[1.02] active:scale-[0.98]"
+      className={`relative w-full text-left transition-all duration-200 focus:outline-none ${isSold
+          ? "cursor-not-allowed opacity-50"
+          : !canPurchase
+            ? "cursor-not-allowed opacity-40"
+            : "hover:scale-[1.02] active:scale-[0.98]"
         }`}
     >
       <div
@@ -156,7 +159,12 @@ function LotteryTicketCard({
               <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-white/40">Lucky</span>
             </div>
             <div className="flex items-center gap-1">
-              {hot && (
+              {isSold && (
+                <span className="rounded-full border border-red-500/30 bg-red-500/20 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-red-300">
+                  Sold
+                </span>
+              )}
+              {hot && !isSold && (
                 <span className="rounded-full border border-orange-500/30 bg-orange-500/20 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-orange-300">
                   Hot
                 </span>
@@ -193,8 +201,8 @@ function LotteryTicketCard({
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div>
-              <p className="text-[7px] uppercase tracking-[0.2em] text-white/30">Sold</p>
-              <p className="font-mono text-xs font-bold text-white/60">{entry.purchaseCount}</p>
+              <p className="text-[7px] uppercase tracking-[0.2em] text-white/30">{isSold ? "Status" : "Sold"}</p>
+              <p className={`font-mono text-xs font-bold ${isSold ? "text-red-400" : "text-white/60"}`}>{isSold ? "Booked" : entry.purchaseCount}</p>
             </div>
             {/* Mini barcode */}
             <div className="flex items-end gap-[1.5px] h-4">
@@ -375,16 +383,6 @@ export default function LotteryPage() {
 
   const numbers = useMemo(() => todayRound?.numbers ?? [], [todayRound]);
   const selectedTicket = useMemo(() => numbers.find((e) => e.number === selectedNumber) ?? null, [numbers, selectedNumber]);
-  const todayKey = new Date().toISOString().slice(0, 10);
-
-  const purchasedNumbers = useMemo(
-    () => new Set(
-      purchases
-        .filter((p) => (p.dateKey ?? p.createdAt?.slice(0, 10)) === todayKey)
-        .map((p) => p.number)
-    ),
-    [purchases],
-  );
 
   const ticketPrice = todayRound?.ticketPrice ?? config?.ticketPrice ?? 100;
   const winAmount = todayRound?.winAmount ?? config?.winAmount ?? 5000;
@@ -495,7 +493,7 @@ export default function LotteryPage() {
                 key={entry.number}
                 entry={entry}
                 isSelected={selectedNumber === entry.number}
-                canPurchase={canPurchase && !purchasedNumbers.has(entry.number)}
+                canPurchase={canPurchase && entry.purchaseCount === 0}
                 ticketPrice={ticketPrice}
                 winAmount={winAmount}
                 onSelect={() =>
@@ -612,7 +610,7 @@ export default function LotteryPage() {
                   renderItem={(item) => (
                     <>
                       <ListHeader title={item.dateKey} rightLabel={item.status} />
-                      <ListBody leftTitle={item.status === "RESULT_DECLARED" && item.winningNumber ? item.winningNumber : "Pending"} leftSubtitle={`Sales ₹${item.totalSales}`} rightValue={`${item.totalPurchases} buys`} rightTone={item.status === "RESULT_DECLARED" ? "success" : "normal"} />
+                      <ListBody leftTitle={item.status === "RESULT_DECLARED" && item.winningNumber ? item.winningNumber : "Pending"} leftSubtitle={item.status === "RESULT_DECLARED" ? `Winner: ${item.winningNumber || "N/A"}` : "Awaiting result"} rightValue={item.status === "RESULT_DECLARED" ? "Declared" : "Pending"} rightTone={item.status === "RESULT_DECLARED" ? "success" : "normal"} />
                     </>
                   )}
                 />

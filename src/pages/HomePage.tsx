@@ -63,7 +63,7 @@ const HomePage = () => {
   const [timeLeft, setTimeLeft] = useState("");
   const [betConfirmOpen, setBetConfirmOpen] = useState(false);
   const [myBets, setMyBets] = useState<any[]>([]);
-  const [customBetAmount, setCustomBetAmount] = useState<number>(10);
+  const [customBetAmount, setCustomBetAmount] = useState<string>("10");
 
   const buildWindowDate = useCallback(
     (baseDate: Date, window: FixedSlotWindow, forEnd = false) => {
@@ -199,7 +199,8 @@ const HomePage = () => {
   const placeBet = async () => {
     if (selectedNumber === null || !selectedSlot) return;
 
-    if (customBetAmount <= 0) {
+    const amount = Number(customBetAmount);
+    if (!amount || amount <= 0) {
       toast.error("Bet amount must be greater than 0");
       return;
     }
@@ -209,17 +210,17 @@ const HomePage = () => {
       await api.placeBet(
         selectedSlot._id,
         String(selectedNumber).padStart(2, "0"),
-        customBetAmount,
+        amount,
       );
 
       const multiplier =
         (selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10);
-      const winEstimate = customBetAmount * multiplier;
+      const winEstimate = amount * multiplier;
 
       toast.success(
         `Bet placed on #${String(selectedNumber).padStart(2, "0")}`,
         {
-          description: `${customBetAmount} rupees deducted. Win ${winEstimate} rupees.`,
+          description: `${amount} rupees deducted. Win ${winEstimate} rupees.`,
         },
       );
 
@@ -468,7 +469,7 @@ const HomePage = () => {
                             whileTap={{ scale: 0.85 }}
                             onClick={() => {
                               setSelectedNumber(num);
-                              setCustomBetAmount(selectedSlot.betAmount || 10);
+                              setCustomBetAmount(String(selectedSlot.betAmount || 10));
                               setBetConfirmOpen(true);
                             }}
                             disabled={isDisabled}
@@ -534,7 +535,7 @@ const HomePage = () => {
                   min={selectedSlot.betAmount || 10}
                   step={selectedSlot.betAmount || 10}
                   value={customBetAmount}
-                  onChange={(e) => setCustomBetAmount(Number(e.target.value))}
+                  onChange={(e) => setCustomBetAmount(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/30 p-3 text-white outline-none focus:border-primary/50"
                   placeholder={`Multiple of ${selectedSlot.betAmount || 10}`}
                 />
@@ -552,20 +553,20 @@ const HomePage = () => {
               <div className="mb-4 mx-3 flex items-center justify-between">
                 <div className="text-left">
                   <p className="text-xs text-white/40">Cost</p>
-                  <p className="text-sm font-bold text-white">{customBetAmount} rupees</p>
+                  <p className="text-sm font-bold text-white">{Number(customBetAmount) || 0} rupees</p>
                 </div>
                 <div className="text-white/20">→</div>
                 <div className="text-right">
                   <p className="text-xs text-white/40">Win</p>
                   <p className="text-sm font-bold text-green-400">
-                    {customBetAmount * ((selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10))} rupees
+                    {(Number(customBetAmount) || 0) * ((selectedSlot.winAmount || 900) / (selectedSlot.betAmount || 10))} rupees
                   </p>
                 </div>
               </div>
 
               <button
                 onClick={placeBet}
-                disabled={betting || customBetAmount <= 0}
+                disabled={betting || !customBetAmount || Number(customBetAmount) <= 0}
                 className="w-full rounded-xl bg-gradient-gold py-3 font-bold text-black disabled:opacity-50"
               >
                 {betting ? "Placing..." : "Place Bet"}
