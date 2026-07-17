@@ -61,9 +61,13 @@ const AuthPage = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 300 }}
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold gold-glow"
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center"
           >
-            <Dice1 className="h-8 w-8 text-[hsl(220,20%,7%)]" />
+            <img
+              src="/logo.jpeg"
+              alt="DhanWarsha Logo"
+              className="h-16 w-16 object-contain"
+            />
           </motion.div>
           <h1 className="text-3xl font-bold text-gradient-gold font-display">
             DhanWarsha
@@ -77,21 +81,19 @@ const AuthPage = () => {
           <div className="mb-6 flex rounded-xl bg-secondary p-1">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-                isLogin
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${isLogin
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Login
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-                !isLogin
+              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${!isLogin
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Sign Up
             </button>
@@ -167,7 +169,7 @@ const AuthPage = () => {
               )}
             </button>
           </form>
-              
+
           <div className="mt-6 text-center">
             <Link
               to="/install"
