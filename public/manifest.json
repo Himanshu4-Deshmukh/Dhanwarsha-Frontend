@@ -18,13 +18,13 @@
       "type": "image/x-icon"
     },
     {
-      "src": "/pwa-icon.svg",
+      "src": "/logo.jpeg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/pwa-maskable.svg",
+      "src": "/logo.jpeg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
