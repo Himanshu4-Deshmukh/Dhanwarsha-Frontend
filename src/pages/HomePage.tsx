@@ -51,7 +51,6 @@ const FIXED_SLOT_WINDOWS: FixedSlotWindow[] = [
 const RESULT_DELAY_MS = 5 * 60 * 1000;
 
 const HomePage = () => {
-  const [balance, setBalance] = useState<number | null>(null);
   const [allSlots, setAllSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
@@ -113,13 +112,11 @@ const HomePage = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [walletRes, slotsRes, betsRes] = await Promise.all([
-        api.getBalance(),
+      const [slotsRes, betsRes] = await Promise.all([
         api.getTodaySlots(),
         api.getMyBets().catch(() => []),
       ]);
 
-      setBalance(walletRes.balance);
       setAllSlots(slotsRes);
       setMyBets(betsRes.slice(0, 20));
     } catch {
