@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Clock, Loader2, Target } from "lucide-react";
+import { Clock, Loader2, Target } from "lucide-react";
 import { toast } from "sonner";
 
 type FixedSlotWindow = {
@@ -53,9 +51,6 @@ const FIXED_SLOT_WINDOWS: FixedSlotWindow[] = [
 const RESULT_DELAY_MS = 5 * 60 * 1000;
 
 const HomePage = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
   const [balance, setBalance] = useState<number | null>(null);
   const [allSlots, setAllSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
@@ -263,26 +258,6 @@ const HomePage = () => {
 
   return (
     <div className="space-y-4 p-4 pb-28">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-white/40">Welcome back</p>
-          <h1 className="text-xl font-bold text-white font-display">
-            {user?.name || "Player"}
-          </h1>
-        </div>
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate("/wallet")}
-          className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 cursor-pointer"
-        >
-          <Coins className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-primary font-display">
-            {balance ?? 0}
-          </span>
-          <span className="text-xs text-white/40">rupees</span>
-        </motion.div>
-      </div>
 
       {slots.map((slot) => {
         const isSelected = selectedSlot?._id === slot._id;

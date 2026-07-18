@@ -4,12 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import BottomNav from "@/components/BottomNav";
+import Header from "@/components/Header";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import TimeBazarPage from "./pages/TimeBazarPage";
 import LotteryPage from "./pages/LotteryPage";
 import WalletPage from "./pages/WalletPage";
-import BetsPage from "./pages/BetsPage";
+import HistoryPage from "./pages/HistoryPage";
 import ProfilePage from "./pages/ProfilePage";
 import InstallPage from "./pages/InstallPage";
 import NotFound from "./pages/NotFound";
@@ -56,13 +57,14 @@ function AppLayout() {
   return (
     <div className="mx-auto min-h-screen max-w-lg bg-background">
       <ProtectedRoute>
+        <Header />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/time-bazar" element={<TimeBazarPage />} />
           <Route path="/sports" element={<SportsPage />} />
           <Route path="/lottery" element={<LotteryPage />} />
           <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/bets" element={<BetsPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
