@@ -62,7 +62,7 @@ const HistoryPage = () => {
         api.getTransactions(),
         api.getMyPayments().catch(() => []),
         api.getMyWithdrawals().catch(() => []),
-        api.getMyLiveDrawBets().catch(() => []),
+        api.getMyBets().catch(() => []),
       ]);
       setTransactions(txs);
       setPaymentRequests(payments);

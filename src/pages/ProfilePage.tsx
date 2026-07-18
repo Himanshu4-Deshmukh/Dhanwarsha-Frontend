@@ -8,7 +8,6 @@ import {
   Shield,
   ChevronRight,
   ShieldCheck,
-  Trophy,
   Wallet,
 } from 'lucide-react';
 
@@ -22,14 +21,6 @@ const ProfilePage = () => {
   };
 
   const quickLinks = [
-    {
-      icon: Trophy,
-      label: 'My Bets',
-      description: 'View your bet history & results',
-      path: '/bets',
-      color: 'text-amber-400',
-      bg: 'bg-amber-400/10',
-    },
     {
       icon: Wallet,
       label: 'Wallet',
