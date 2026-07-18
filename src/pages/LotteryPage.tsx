@@ -377,7 +377,7 @@ export default function LotteryPage() {
 
   useEffect(() => {
     loadData();
-    const id = setInterval(() => loadData(true), 30000);
+    const id = setInterval(() => loadData(true), 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -389,14 +389,106 @@ export default function LotteryPage() {
   const canPurchase = todayRound?.status === "OPEN";
   const walletCanCover = balance >= ticketPrice;
 
+  // If selected ticket becomes sold, dismiss the purchase sheet
+  useEffect(() => {
+    if (selectedNumber && selectedTicket && selectedTicket.purchaseCount > 0) {
+      toast.error(`Ticket ${selectedNumber} was purchased by someone else!`);
+      setSelectedNumber("");
+    }
+  }, [selectedTicket, selectedNumber]);
+
+  useEffect(() => {
+    // Listen for purchases from other tabs
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('lottery-updates');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'purchase' && event.data?.number) {
+          setTodayRound(prev => {
+            if (!prev) return prev;
+            const num = prev.numbers.find(n => n.number === event.data.number);
+            if (num && num.purchaseCount === 0) {
+              return {
+                ...prev,
+                numbers: prev.numbers.map(n =>
+                  n.number === event.data.number
+                    ? { ...n, purchaseCount: n.purchaseCount + 1 }
+                    : n
+                ),
+                totalPurchases: (prev.totalPurchases || 0) + 1,
+                totalSales: (prev.totalSales || 0) + (prev.ticketPrice || 100),
+              };
+            }
+            return prev;
+          });
+        }
+      };
+    } catch { /* BroadcastChannel not supported */ }
+
+    return () => {
+      channel?.close();
+    };
+  }, []);
+
+  const broadcastPurchase = (number: string) => {
+    try {
+      const channel = new BroadcastChannel('lottery-updates');
+      channel.postMessage({ type: 'purchase', number, timestamp: Date.now() });
+      channel.close();
+    } catch { /* BroadcastChannel not supported */ }
+  };
+
   const handleBuy = async () => {
     if (!selectedNumber || !todayRound) return;
     setBuying(true);
     try {
+      // Pre-check: verify ticket is still available
+      const freshRound = await api.getLotteryToday();
+      const freshNumber = freshRound.numbers.find(n => n.number === selectedNumber);
+      if (freshNumber && freshNumber.purchaseCount > 0) {
+        toast.error(`Ticket ${selectedNumber} was just purchased by someone else!`);
+        // Optimistically update local state
+        setTodayRound(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            numbers: prev.numbers.map(n =>
+              n.number === selectedNumber
+                ? { ...n, purchaseCount: freshNumber.purchaseCount }
+                : n
+            ),
+          };
+        });
+        setSelectedNumber("");
+        setBuying(false);
+        return;
+      }
+      
       await api.buyLotteryTicket(selectedNumber);
+      
+      // Optimistic update: mark number as sold immediately
+      setTodayRound(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          numbers: prev.numbers.map(n =>
+            n.number === selectedNumber
+              ? { ...n, purchaseCount: n.purchaseCount + 1 }
+              : n
+          ),
+          totalPurchases: (prev.totalPurchases || 0) + 1,
+          totalSales: (prev.totalSales || 0) + ticketPrice,
+        };
+      });
+      
       toast.success(`Ticket ${selectedNumber} purchased!`);
       setSelectedNumber("");
-      await loadData();
+      
+      // Notify other tabs
+      broadcastPurchase(selectedNumber);
+      
+      // Refresh data in background
+      loadData(true);
     } catch (error: any) {
       toast.error(error?.message || "Failed to buy ticket");
     } finally {
