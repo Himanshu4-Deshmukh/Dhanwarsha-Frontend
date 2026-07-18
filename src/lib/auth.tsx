@@ -8,6 +8,7 @@ interface User {
   role: 'USER' | 'ADMIN';
 }
 
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
