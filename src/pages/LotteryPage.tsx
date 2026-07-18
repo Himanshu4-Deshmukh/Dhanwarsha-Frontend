@@ -398,7 +398,7 @@ export default function LotteryPage() {
   }, [selectedTicket, selectedNumber]);
 
   useEffect(() => {
-    // Listen for purchases from other tabs
+    // Listen for purchases from other tabs (same browser)
     let channel: BroadcastChannel | null = null;
     try {
       channel = new BroadcastChannel('lottery-updates');
@@ -425,8 +425,44 @@ export default function LotteryPage() {
       };
     } catch { /* BroadcastChannel not supported */ }
 
+    // Listen for purchases from ALL users via SSE
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = api.connectLotteryStream();
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'purchase' && data.number) {
+            setTodayRound(prev => {
+              if (!prev) return prev;
+              const num = prev.numbers.find(n => n.number === data.number);
+              if (num && num.purchaseCount === 0) {
+                return {
+                  ...prev,
+                  numbers: prev.numbers.map(n =>
+                    n.number === data.number
+                      ? { ...n, purchaseCount: n.purchaseCount + 1 }
+                      : n
+                  ),
+                  totalPurchases: (prev.totalPurchases || 0) + 1,
+                  totalSales: (prev.totalSales || 0) + (prev.ticketPrice || 100),
+                };
+              }
+              return prev;
+            });
+          } else if (data.type === 'status_change') {
+            loadData(true);
+          }
+        } catch { /* ignore parse errors */ }
+      };
+      eventSource.onerror = () => {
+        // SSE will auto-reconnect; suppress noisy logs
+      };
+    } catch { /* SSE not available */ }
+
     return () => {
       channel?.close();
+      eventSource?.close();
     };
   }, []);
 

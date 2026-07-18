@@ -222,6 +222,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ number }),
     }),
+  connectLotteryStream: (): EventSource => {
+    return new EventSource(`${API_BASE}/lottery/stream`);
+  },
 
   // Bets
   placeBet: (slotId: string, number: string, amount: number) =>
