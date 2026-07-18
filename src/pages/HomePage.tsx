@@ -282,9 +282,9 @@ const HomePage = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Status row */}
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 min-w-0">
                   <span
-                    className={`h-2 w-2 rounded-full ${isLive
+                    className={`h-2 w-2 shrink-0 rounded-full ${isLive
                       ? "bg-primary animate-pulse"
                       : isUpcoming
                         ? "bg-amber-400"
@@ -294,7 +294,7 @@ const HomePage = () => {
                       }`}
                   />
                   <p
-                    className={`text-xs uppercase tracking-[0.1em] ${isLive
+                    className={`text-[10px] sm:text-xs uppercase tracking-[0.1em] truncate min-w-0 ${isLive
                       ? "text-primary"
                       : isUpcoming
                         ? "text-amber-400/80"
@@ -304,20 +304,20 @@ const HomePage = () => {
                       }`}
                   >
                     {isLive && "LIVE"}
-                    {isUpcoming && `⏳ Opens at ${new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+                    {isUpcoming && `Opens at ${new Date(slot.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
                     {isClosed && "CLOSED"}
                     {isResult && "RESULT DECLARED"}
                   </p>
                 </div>
 
                 {/* Game name */}
-                <h2 className="text-xl font-bold text-white font-display">
+                <h2 className="text-lg sm:text-xl font-bold text-white font-display truncate">
                   {slot.windowLabel}
                 </h2>
 
                 {/* Subtext */}
                 {isLive && (
-                  <p className="mt-1 text-sm text-white/50">
+                  <p className="mt-1 text-xs sm:text-sm text-white/50 truncate">
                     Bet{" "}
                     <span className="font-bold text-primary">
                       {slot.betAmount ?? "--"} rupees
@@ -329,7 +329,7 @@ const HomePage = () => {
                   </p>
                 )}
                 {isUpcoming && (
-                  <p className="mt-1 text-sm text-white/40">
+                  <p className="mt-1 text-xs sm:text-sm text-white/40 truncate">
                     Bidding starts at{" "}
                     {new Date(slot.startTime).toLocaleTimeString([], {
                       hour: "numeric",
@@ -338,7 +338,7 @@ const HomePage = () => {
                   </p>
                 )}
                 {isClosed && !isResult && (
-                  <p className="mt-1 text-sm text-red-400/70">
+                  <p className="mt-1 text-xs sm:text-sm text-red-400/70 truncate">
                     Result in 5 minutes after close
                   </p>
                 )}
@@ -376,9 +376,9 @@ const HomePage = () => {
             </div>
 
             {/* Footer: Open / Close times + Timer */}
-            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/50">
-              <div className="flex items-center gap-3">
-                <span>
+            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-[10px] sm:text-xs text-white/50">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 truncate">
+                <span className="truncate">
                   OPEN:{" "}
                   <span className="text-white/80">
                     {new Date(slot.startTime).toLocaleTimeString([], {
@@ -387,8 +387,8 @@ const HomePage = () => {
                     })}
                   </span>
                 </span>
-                <span className="text-white/20">|</span>
-                <span>
+                <span className="text-white/20 shrink-0">|</span>
+                <span className="truncate">
                   CLOSE:{" "}
                   <span className="text-white/80">
                     {new Date(slot.endTime).toLocaleTimeString([], {
