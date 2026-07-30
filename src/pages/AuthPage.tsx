@@ -72,13 +72,18 @@ const AuthPage = () => {
     setLoading(true);
     try {
       const res = await sendOtp({ mobileNumber, action: "login" });
+      if (res.access_token) {
+        localStorage.setItem("token", res.access_token);
+        window.location.reload();
+        return;
+      }
       if (res.success && res.otpRef) {
         setOtpFlow({ mobileNumber, otpRef: res.otpRef, action: "login" });
         toast.success("OTP sent to your WhatsApp");
       } else if (res.message === "notexists") {
         setError("No account found with this number");
       } else {
-        setError(res.message);
+        setError(res.message || "Failed to send OTP");
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to send OTP"));
@@ -92,13 +97,18 @@ const AuthPage = () => {
     setLoading(true);
     try {
       const res = await sendOtp({ mobileNumber, action: "register", name, referralCode });
+      if (res.access_token) {
+        localStorage.setItem("token", res.access_token);
+        window.location.reload();
+        return;
+      }
       if (res.success && res.otpRef) {
         setOtpFlow({ mobileNumber, otpRef: res.otpRef, action: "register", name, referralCode });
         toast.success("OTP sent to your WhatsApp");
       } else if (res.message === "exists") {
         setError("Account already exists with this number");
       } else {
-        setError(res.message);
+        setError(res.message || "Failed to send OTP");
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to send OTP"));

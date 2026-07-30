@@ -152,7 +152,7 @@ export const api = {
 
   // OTP Auth
   sendOtp: (data: { mobileNumber: string; action: "login" | "register"; name?: string; referralCode?: string }) =>
-    request<{ success: boolean; message: string; otpRef?: string }>("/auth/send-otp", {
+    request<{ success?: boolean; message?: string; otpRef?: string; access_token?: string; user?: any }>("/auth/send-otp", {
       method: "POST",
       body: JSON.stringify(data),
     }),
