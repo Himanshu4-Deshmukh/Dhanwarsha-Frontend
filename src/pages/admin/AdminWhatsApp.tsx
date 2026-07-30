@@ -40,7 +40,7 @@ export default function AdminWhatsApp() {
   const fetchQR = useCallback(async () => {
     try {
       const res = await api.admin.getWhatsAppQR();
-      setStatus(res.data.status as WAStatus);
+      setStatus(res.data.status.status as WAStatus);
       if (res.data.qr) setQrCode(res.data.qr);
     } catch {
       // ignore

@@ -350,9 +350,9 @@ export const api = {
 
     // WhatsApp
     getWhatsAppStatus: () =>
-      request<{ success: boolean; data: { status: string; lastConnectedAt?: string } }>("/whatsapp/status"),
+      request<{ success: boolean; data: { status: string; lastConnectedAt?: string; qrReady: boolean } }>("/whatsapp/status"),
     getWhatsAppQR: () =>
-      request<{ success: boolean; data: { qr: string; status: string } }>("/whatsapp/qr"),
+      request<{ success: boolean; data: { qr: string | null; status: { status: string; lastConnectedAt?: string; qrReady: boolean } } }>("/whatsapp/qr"),
     connectWhatsApp: () =>
       request<{ success: boolean }>("/whatsapp/connect", { method: "POST" }),
     disconnectWhatsApp: () =>
