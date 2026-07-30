@@ -1,6 +1,6 @@
 const API_BASE =
   import.meta.env.VITE_API_URL || 'https://dhanwarsha.commercialpropertyhold.in/api';
-// "http://localhost:8001/api";
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
   const isFormData =
@@ -149,6 +149,20 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // OTP Auth
+  sendOtp: (data: { mobileNumber: string; action: "login" | "register"; name?: string; referralCode?: string }) =>
+    request<{ success: boolean; message: string; otpRef?: string }>("/auth/send-otp", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  verifyOtp: (data: { otpRef: string; otp: string; mobileNumber: string; action: "login" | "register"; name?: string; referralCode?: string }) =>
+    request<{ access_token: string; user: any }>("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getAuthConfig: () =>
+    request<{ otpRequired: boolean }>("/auth/config"),
 
   // User
   getProfile: () => request<any>("/users/profile"),
