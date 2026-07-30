@@ -354,11 +354,11 @@ export const api = {
     getWhatsAppQR: () =>
       request<{ success: boolean; data: { qr: string; status: string } }>("/whatsapp/qr"),
     connectWhatsApp: () =>
-      request<{ success: boolean }>("/whatsapp/connect"),
+      request<{ success: boolean }>("/whatsapp/connect", { method: "POST" }),
     disconnectWhatsApp: () =>
-      request<{ success: boolean }>("/whatsapp/disconnect"),
+      request<{ success: boolean }>("/whatsapp/disconnect", { method: "POST" }),
     resetWhatsApp: () =>
-      request<{ success: boolean }>("/whatsapp/reset"),
+      request<{ success: boolean }>("/whatsapp/reset", { method: "POST" }),
 
     // Withdrawals
     getAllWithdrawals: () => request<any[]>("/withdrawals/admin/all"),
