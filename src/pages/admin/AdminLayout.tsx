@@ -16,6 +16,7 @@ import {
   Dice1,
   ArrowUpFromLine,
   Ticket,
+  MessageCircle,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/lib/api";
@@ -30,6 +31,7 @@ const navItems = [
   { to: "/admin/users", label: "Users", icon: Users, end: false, dotKey: null },
   { to: "/admin/payments", label: "Payments", icon: CreditCard, end: false, dotKey: null },
   { to: "/admin/bets", label: "All Bets", icon: TrendingUp, end: false, dotKey: null },
+  { to: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, end: false, dotKey: null },
   { to: "/", label: "Go Home", icon: TrendingUp, end: false, dotKey: null },
   { to: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpFromLine, end: false, dotKey: "withdrawals" },
 ];

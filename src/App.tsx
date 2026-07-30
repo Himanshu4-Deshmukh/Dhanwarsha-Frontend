@@ -23,6 +23,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminBets from "./pages/admin/AdminBets";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import AdminLottery from "./pages/admin/AdminLottery";
+import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import { Loader2 } from "lucide-react";
 import SportsPage from "./pages/SportsPage";
 
@@ -99,6 +100,7 @@ const App = () => (
               <Route path="bets" element={<AdminBets />} />
               <Route path="withdrawals" element={<AdminWithdrawals />} />
               <Route path="lottery" element={<AdminLottery />} />
+              <Route path="whatsapp" element={<AdminWhatsApp />} />
             </Route>
             <Route path="/*" element={<AppLayout />} />
           </Routes>

@@ -137,6 +137,8 @@ export type LotteryPurchase = {
   roundId?: string | { _id?: string; dateKey?: string };
 };
 
+export type WhatsAppStatus = "disconnected" | "qr_pending" | "connected" | "failed";
+
 export const api = {
   // Auth
   login: (email: string, password: string) =>
@@ -345,6 +347,18 @@ export const api = {
       }),
     getSlotProfit: (slotId: string) =>
       request<any>(`/admin/slots/${slotId}/profit`),
+
+    // WhatsApp
+    getWhatsAppStatus: () =>
+      request<{ success: boolean; data: { status: string; lastConnectedAt?: string } }>("/whatsapp/status"),
+    getWhatsAppQR: () =>
+      request<{ success: boolean; data: { qr: string; status: string } }>("/whatsapp/qr"),
+    connectWhatsApp: () =>
+      request<{ success: boolean }>("/whatsapp/connect"),
+    disconnectWhatsApp: () =>
+      request<{ success: boolean }>("/whatsapp/disconnect"),
+    resetWhatsApp: () =>
+      request<{ success: boolean }>("/whatsapp/reset"),
 
     // Withdrawals
     getAllWithdrawals: () => request<any[]>("/withdrawals/admin/all"),
