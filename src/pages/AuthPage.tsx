@@ -27,10 +27,6 @@ const AuthPage = () => {
     }
   }, [navigate, user]);
 
-  if (user) {
-    return null;
-  }
-
   const getErrorMessage = (err: unknown, fallback: string) => {
     if (err && typeof err === "object" && "response" in err) {
       const data = (err as { response: { data: { message?: string } } }).response?.data;
@@ -72,52 +68,44 @@ const AuthPage = () => {
     setLoading(true);
     try {
       const res = await sendOtp({ mobileNumber, action: "login" });
-      if (res.access_token && res.user) {
-        navigate(res.user.role === "ADMIN" ? "/admin" : "/", { replace: true });
-        return;
-      }
       if (res.success && res.otpRef) {
         setOtpFlow({ mobileNumber, otpRef: res.otpRef, action: "login" });
         toast.success("OTP sent to your WhatsApp");
       } else if (res.message === "notexists") {
         setError("No account found with this number");
-      } else {
-        setError(res.message || "Failed to send OTP");
+      } else if (res.message) {
+        setError(res.message);
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to send OTP"));
     } finally {
       setLoading(false);
     }
-  }, [sendOtp, navigate]);
+  }, [sendOtp]);
 
   const handleSendOtpRegister = useCallback(async (mobileNumber: string, name: string, referralCode?: string) => {
     setError("");
     setLoading(true);
     try {
       const res = await sendOtp({ mobileNumber, action: "register", name, referralCode });
-      if (res.access_token && res.user) {
-        navigate("/", { replace: true });
-        return;
-      }
       if (res.success && res.otpRef) {
         setOtpFlow({ mobileNumber, otpRef: res.otpRef, action: "register", name, referralCode });
         toast.success("OTP sent to your WhatsApp");
       } else if (res.message === "exists") {
         setError("Account already exists with this number");
-      } else {
-        setError(res.message || "Failed to send OTP");
+      } else if (res.message) {
+        setError(res.message);
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to send OTP"));
     } finally {
       setLoading(false);
     }
-  }, [sendOtp, navigate]);
+  }, [sendOtp]);
 
   const handleOtpVerify = useCallback(async (otp: string) => {
     if (!otpFlow) return;
-    const role = await verifyOtp({
+    await verifyOtp({
       otpRef: otpFlow.otpRef,
       otp,
       mobileNumber: otpFlow.mobileNumber,
@@ -125,8 +113,7 @@ const AuthPage = () => {
       name: otpFlow.name,
       referralCode: otpFlow.referralCode,
     });
-    navigate(role === "ADMIN" ? "/admin" : "/");
-  }, [otpFlow, verifyOtp, navigate]);
+  }, [otpFlow, verifyOtp]);
 
   const handleResendOtp = useCallback(async () => {
     if (!otpFlow) return;
@@ -142,6 +129,10 @@ const AuthPage = () => {
       throw new Error(res.message);
     }
   }, [otpFlow, sendOtp]);
+
+  if (user) {
+    return null;
+  }
 
   if (otpFlow) {
     return (
