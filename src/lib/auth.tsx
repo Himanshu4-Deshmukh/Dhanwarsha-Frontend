@@ -69,6 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendOtp = async (data: { mobileNumber: string; action: 'login' | 'register'; name?: string; referralCode?: string }) => {
     const res = await api.sendOtp(data);
+    if (res.access_token && res.user) {
+      localStorage.setItem('token', res.access_token);
+      setToken(res.access_token);
+      setUser(res.user);
+    }
     return res;
   };
 

@@ -72,9 +72,8 @@ const AuthPage = () => {
     setLoading(true);
     try {
       const res = await sendOtp({ mobileNumber, action: "login" });
-      if (res.access_token) {
-        localStorage.setItem("token", res.access_token);
-        window.location.reload();
+      if (res.access_token && res.user) {
+        navigate(res.user.role === "ADMIN" ? "/admin" : "/", { replace: true });
         return;
       }
       if (res.success && res.otpRef) {
@@ -90,16 +89,15 @@ const AuthPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sendOtp]);
+  }, [sendOtp, navigate]);
 
   const handleSendOtpRegister = useCallback(async (mobileNumber: string, name: string, referralCode?: string) => {
     setError("");
     setLoading(true);
     try {
       const res = await sendOtp({ mobileNumber, action: "register", name, referralCode });
-      if (res.access_token) {
-        localStorage.setItem("token", res.access_token);
-        window.location.reload();
+      if (res.access_token && res.user) {
+        navigate("/", { replace: true });
         return;
       }
       if (res.success && res.otpRef) {
@@ -115,7 +113,7 @@ const AuthPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sendOtp]);
+  }, [sendOtp, navigate]);
 
   const handleOtpVerify = useCallback(async (otp: string) => {
     if (!otpFlow) return;
