@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => ({
           response.statusCode = 200;
           response.setHeader("Content-Type", "text/html; charset=utf-8");
           response.end(
-            readFileSync(path.resolve(__dirname, "src/landing.html"), "utf-8"),
+            readFileSync(path.resolve(__dirname, "public/landing.html"), "utf-8"),
           );
         });
       },
@@ -40,7 +40,9 @@ export default defineConfig(({ mode }) => ({
       manifest: false,
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        navigateFallbackDenylist: [/^\/~oauth/],
+        // Don't let the service worker serve index.html for the landing page.
+        // "/" and "/landing.html" must always hit the network (Vercel rewrite).
+        navigateFallbackDenylist: [/^\/$/, /^\/landing\.html/, /^\/~oauth/],
       },
     }),
   ].filter(Boolean),
@@ -49,14 +51,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  build: {
-    rollupOptions: {
-      // Include the standalone landing page in the production build. The
-      // deployment rewrite maps the root URL to this generated HTML file.
-      input: {
-        index: path.resolve(__dirname, "index.html"),
-        landing: path.resolve(__dirname, "src/landing.html"),
-      },
-    },
-  },
+  // NOTE: public/landing.html is auto-copied to dist/landing.html by Vite.
+  // Do NOT add it to rollupOptions.input — that creates a duplicate
+  // dist/src/landing.html and is the wrong source of truth.
 }));
