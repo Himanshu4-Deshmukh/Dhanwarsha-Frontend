@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/src/landing.html"
+      "destination": "/landing.html"
     },
     {
       "source": "/((?!api(?:/|$)).+)",
