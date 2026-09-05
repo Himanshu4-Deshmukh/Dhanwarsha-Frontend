@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Download,
   Share2,
-  Smartphone,
 } from "lucide-react";
 import { usePwaInstall } from "@/lib/pwa-install";
 
@@ -39,9 +38,11 @@ const InstallPage = () => {
       >
         <div className="rounded-[2rem] border border-border bg-gradient-card p-6 shadow-2xl card-glow">
           <div className="mb-8 flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-gold gold-glow">
-              <Smartphone className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <img
+              src="/logo.jpeg"
+              alt="DhanWarsha app icon"
+              className="h-16 w-16 rounded-2xl object-cover shadow-lg"
+            />
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-primary/80">
                 PWA Install
