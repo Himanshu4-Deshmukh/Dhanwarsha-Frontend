@@ -10,7 +10,7 @@ import {
 import { useAuth } from "@/lib/auth";
 
 const baseTabs = [
-  { path: "/", icon: Home, label: "Dhanwarsha" },
+  { path: "/home", icon: Home, label: "Dhanwarsha" },
   { path: "/time-bazar", icon: Sparkles, label: "Matka King" },
   // { path: "/sports", icon: Trophy, label: "Sports" },
   { path: "/lottery", icon: Ticket, label: "Lottery" },
@@ -32,8 +32,8 @@ const BottomNav = () => {
       <div className="mx-auto flex max-w-lg">
         {tabs.map(({ path, icon: Icon, label }) => {
           const active =
-            path === "/"
-              ? location.pathname === "/"
+            path === "/home"
+              ? location.pathname === "/home"
               : location.pathname.startsWith(path);
 
           return (

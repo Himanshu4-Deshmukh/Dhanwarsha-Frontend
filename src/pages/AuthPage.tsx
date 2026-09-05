@@ -23,7 +23,7 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (user) {
-      navigate(user.role === "ADMIN" ? "/admin" : "/", { replace: true });
+      navigate(user.role === "ADMIN" ? "/admin" : "/home", { replace: true });
     }
   }, [navigate, user]);
 
@@ -42,7 +42,7 @@ const AuthPage = () => {
     setLoading(true);
     try {
       const role = await login(email, password);
-      navigate(role === "ADMIN" ? "/admin" : "/");
+      navigate(role === "ADMIN" ? "/admin" : "/home");
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
@@ -55,7 +55,7 @@ const AuthPage = () => {
     setLoading(true);
     try {
       await signup(name, email, password);
-      navigate("/");
+      navigate("/home");
     } catch (err: any) {
       setError(err.message || "Signup failed");
     } finally {

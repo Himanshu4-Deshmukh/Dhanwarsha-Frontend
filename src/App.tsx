@@ -50,7 +50,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   if (!user) return <Navigate to="/auth" replace />;
-  if (user.role !== "ADMIN") return <Navigate to="/" replace />;
+  if (user.role !== "ADMIN") return <Navigate to="/home" replace />;
   return <>{children}</>;
 }
 
@@ -60,7 +60,7 @@ function AppLayout() {
       <ProtectedRoute>
         <Header />
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/time-bazar" element={<TimeBazarPage />} />
           <Route path="/sports" element={<SportsPage />} />
           <Route path="/lottery" element={<LotteryPage />} />

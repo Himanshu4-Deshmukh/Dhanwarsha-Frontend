@@ -40,8 +40,14 @@ export default defineConfig(({ mode }) => ({
       manifest: false,
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        // Don't let the service worker serve index.html for the landing page.
-        // "/" and "/landing.html" must always hit the network (Vercel rewrite).
+        // dist/app.html is created by scripts/copy-landing-index.cjs AFTER
+        // the bundle is built, so globPatterns can't see it — precache it
+        // explicitly (revision: null = always revalidate from network).
+        additionalManifestEntries: [{ url: "app.html", revision: null }],
+        // dist/index.html is the static landing page, the React SPA is
+        // dist/app.html — offline app navigations must fall back to the app.
+        navigateFallback: "/app.html",
+        // "/" and "/landing.html" are the marketing page: always network.
         navigateFallbackDenylist: [/^\/$/, /^\/landing\.html/, /^\/~oauth/],
       },
     }),
